@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns:tizen="http://tizen.org/ns/widgets" xmlns="http://www.w3.org/ns/widgets" id="http://adfreebrowser.tizen/app" version="1.1.5" viewmodes="maximized">
+    <access origin="*" subdomains="true"></access>
+    <tizen:allow-navigation href="*"></tizen:allow-navigation>
+    <tizen:application id="AdFreeBrws.AdFreeBrowser" package="AdFreeBrws" required_version="3.0"></tizen:application>
+    <author>Antigravity</author>
+    <content src="index.html"></content>
+    <feature name="http://tizen.org/feature/screen.size.all"></feature>
+    <feature name="http://tizen.org/feature/web.service"></feature>
+    <icon src="icon.png" width="512" height="512"></icon>
+    <name>AdFree Browser</name>
+    <tizen:privilege name="http://tizen.org/privilege/internet"></tizen:privilege>
+    <tizen:privilege name="http://developer.samsung.com/privilege/network.public"></tizen:privilege>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"></tizen:privilege>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"></tizen:privilege>
+    <tizen:privilege name="http://tizen.org/privilege/unlimitedstorage"></tizen:privilege>
+    <tizen:metadata key="http://samsung.com/tv/metadata/html5.4k.support" value="true"></tizen:metadata>
+    <tizen:metadata key="http://samsung.com/tv/metadata/use.uwe" value="true"></tizen:metadata>
+    <tizen:profile name="tv-samsung"></tizen:profile>
+    <tizen:service id="AdFreeBrws.ProxyService">
+        <tizen:content src="service.js"></tizen:content>
+        <tizen:name>ProxyService</tizen:name>
+        <tizen:description>ProxyService</tizen:description>
+    </tizen:service>
+    <tizen:setting screen-orientation="landscape" context-menu="enable" background-support="enable" encryption="disable" install-location="auto" hwkey-event="enable"></tizen:setting>
+</widget>

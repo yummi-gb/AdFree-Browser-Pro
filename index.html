@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdFree Browser Pro 1.1.5</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  body {
+    background: #0b0f17;
+    color: #f0f6fc;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Row 0: Multi-Tab Bar */
+  #tabbar {
+    height: 52px;
+    background: #0d1117;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 8px;
+    z-index: 2001;
+    transition: margin-top 0.2s ease;
+  }
+  #tabbar.hidden {
+    display: none !important;
+  }
+  body.browser-fullscreen #tabbar,
+  body.browser-fullscreen #navbar,
+  body.browser-fullscreen #progress-bar {
+    display: none !important;
+  }
+  body.browser-fullscreen.peek-bars #tabbar,
+  body.browser-fullscreen.peek-bars #navbar {
+    display: flex !important;
+  }
+  body.video-fullscreen #tabbar,
+  body.video-fullscreen #navbar,
+  body.video-fullscreen #progress-bar,
+  body.video-fullscreen #main-area {
+    display: none !important;
+  }
+  .tab-pill {
+    height: 38px;
+    max-width: 250px;
+    min-width: 140px;
+    background: #161b22;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: #8b949e;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-pill.active-tab {
+    background: #1f293d;
+    border-color: #388bfd;
+    color: #ffffff;
+  }
+  .tab-pill.focused, .tab-action.focused {
+    border-color: #58a6ff !important;
+    background: #1f6feb !important;
+    color: #ffffff !important;
+    transform: scale(1.04);
+    box-shadow: 0 0 16px rgba(31, 111, 235, 0.8);
+  }
+  .tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .tab-action {
+    height: 38px;
+    padding: 0 14px;
+    background: #21262d;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    color: #e6edf3;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tab-action.new-tab { background: #238636; border-color: #2ea043; color: #fff; }
+  .tab-action.cursor-toggle { background: #1f293d; border-color: #388bfd; color: #58a6ff; }
+
+  /* Row 1: Navigation Bar */
+  #navbar {
+    height: 68px;
+    background: #161b22;
+    border-bottom: 2px solid #30363d;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 10px;
+    z-index: 2000;
+  }
+  .nav-btn {
+    background: #21262d;
+    color: #e6edf3;
+    border: 2px solid #30363d;
+    border-radius: 11px;
+    height: 46px;
+    padding: 0 14px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .nav-btn.fav-active {
+    border-color: #d29922;
+    color: #e3b341;
+    background: rgba(210, 153, 34, 0.15);
+  }
+  .nav-btn.focused, #url-bar.focused {
+    border-color: #58a6ff !important;
+    background: #1f6feb !important;
+    color: #ffffff !important;
+    transform: scale(1.04);
+    box-shadow: 0 0 18px rgba(31, 111, 235, 0.75);
+  }
+  #url-bar {
+    flex: 1;
+    height: 46px;
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 11px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    overflow: hidden;
+  }
+  #url-text {
+    font-size: 18px;
+    color: #c9d1d9;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .url-badge {
+    background: rgba(56, 139, 253, 0.2);
+    color: #58a6ff;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  #progress-bar {
+    height: 4px;
+    width: 0%;
+    background: linear-gradient(90deg, #2f81f7, #3fb950);
+    transition: width 0.2s ease;
+    z-index: 2500;
+  }
+
+  /* Main Area */
+  #main-area {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Home View */
+  #home-view {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, #1a2333 0%, #0b0f17 75%);
+    padding: 26px 46px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 20;
+    overflow-y: auto;
+  }
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(31, 111, 235, 0.22) 0%, rgba(22, 27, 34, 0.95) 100%);
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 18px 28px;
+  }
+  .hero h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .hero p { font-size: 17px; color: #8b949e; }
+  .speed-badge {
+    background: rgba(46, 160, 67, 0.2);
+    border: 1px solid #2ea043;
+    color: #3fb950;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .grid-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #58a6ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .site-card {
+    background: #161b22;
+    border: 2px solid #30363d;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+    position: relative;
+  }
+  .site-card.focused {
+    border-color: #58a6ff;
+    background: #1f293d;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 22px rgba(31, 111, 235, 0.45);
+  }
+  .site-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #21262d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .site-info { overflow: hidden; flex: 1; }
+  .site-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #f0f6fc;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .site-desc {
+    font-size: 14px;
+    color: #8b949e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .help-footer {
+    margin-top: auto;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    color: #c9d1d9;
+  }
+  .pill {
+    padding: 2px 9px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #fff;
+    background: #30363d;
+    margin-right: 5px;
+  }
+  .pill.red { background: #da3633; }
+  .pill.green { background: #238636; }
+  .pill.yellow { background: #d29922; color: #000; }
+  .pill.blue { background: #1f6feb; }
+
+  /* 100% Pure Direct-DOM Web Container (ZERO Iframes = Mouse NEVER loses focus!) */
+  #web-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: none;
+    background: #ffffff;
+    color: #111111;
+    overflow: hidden;
+  }
+  .tab-pane {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    background: #ffffff;
+    color: #111111;
+    position: relative;
+    padding-bottom: 80px;
+  }
+  .tab-pane.active-pane {
+    display: block;
+  }
+
+  .tab-pane [id*="google_ads"], .tab-pane [class*="google_ads"],
+  .tab-pane ins.adsbygoogle, .tab-pane .ad-banner, .tab-pane .advertisement,
+  .tab-pane #onetrust-consent-sdk, .tab-pane #CybotCookiebotDialog {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+  }
+  .ag-tv-hover {
+    outline: 4px solid #1f6feb !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 22px rgba(31, 111, 235, 0.85) !important;
+    border-radius: 4px !important;
+  }
+
+  /* Precision TV Mouse Cursor (Always visible, usable on Home, Navbar AND Websites!) */
+  #cursor {
+    position: fixed;
+    width: 36px;
+    height: 36px;
+    pointer-events: none;
+    z-index: 100000;
+    transform: translate(-50%, -50%);
+    display: block;
+  }
+  #cursor-ring {
+    width: 100%;
+    height: 100%;
+    border: 3px solid #ffffff;
+    background: rgba(31, 111, 235, 0.88);
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(0, 0, 0, 0.9), 0 0 0 3px #1f6feb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #cursor.hovering #cursor-ring {
+    background: rgba(46, 160, 67, 0.95);
+    box-shadow: 0 0 20px rgba(46, 160, 67, 0.95), 0 0 0 3px #2ea043;
+    transform: scale(1.22);
+  }
+  #cursor-dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; }
+  #cursor-label {
+    position: absolute;
+    left: 44px;
+    top: 2px;
+    background: rgba(13, 17, 23, 0.95);
+    color: #58a6ff;
+    border: 1px solid #30363d;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    max-width: 380px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: none;
+  }
+
+  /* Favorites & History Modal */
+  #panel-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 12, 20, 0.92);
+    z-index: 9400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .panel-box {
+    width: 1100px;
+    max-height: 82vh;
+    background: #161b22;
+    border: 2px solid #30363d;
+    border-radius: 22px;
+    padding: 28px 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.9);
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 14px;
+  }
+  .panel-title { font-size: 26px; font-weight: 800; color: #58a6ff; }
+  .panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 55vh;
+    padding-right: 8px;
+  }
+  .panel-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1117;
+    border: 2px solid #30363d;
+    border-radius: 12px;
+    padding: 14px 20px;
+    gap: 16px;
+  }
+  .panel-item-btn {
+    flex: 1;
+    text-align: left;
+    background: transparent;
+    border: 2px solid transparent;
+    color: #f0f6fc;
+    font-size: 20px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .panel-del-btn {
+    background: #21262d;
+    border: 2px solid #30363d;
+    color: #f85149;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .panel-focusable.focused {
+    border-color: #58a6ff !important;
+    background: #1f6feb !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(31, 111, 235, 0.8);
+  }
+
+  /* On-Screen TV Keyboard */
+  #keyboard-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 12, 20, 0.92);
+    z-index: 9500;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .kb-box {
+    width: 1180px;
+    background: #161b22;
+    border: 2px solid #30363d;
+    border-radius: 22px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+  }
+  .kb-top { display: flex; justify-content: space-between; align-items: center; }
+  .kb-title { font-size: 23px; font-weight: 700; color: #58a6ff; }
+  .kb-preview {
+    height: 60px;
+    background: #0d1117;
+    border: 2px solid #58a6ff;
+    border-radius: 12px;
+    padding: 0 20px;
+    font-size: 26px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .kb-rows { display: flex; flex-direction: column; gap: 10px; }
+  .kb-row { display: flex; gap: 10px; }
+  .kb-key {
+    flex: 1;
+    height: 58px;
+    background: #21262d;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    color: #f0f6fc;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .kb-key.wide-2 { flex: 2.2; }
+  .kb-key.wide-3 { flex: 3.5; }
+  .kb-key.go { background: #238636; border-color: #2ea043; color: #fff; }
+  .kb-key.cancel { background: #30363d; color: #f85149; }
+  .kb-key.focused {
+    border-color: #58a6ff;
+    background: #1f6feb;
+    color: #fff;
+    transform: scale(1.06);
+    box-shadow: 0 0 18px rgba(31, 111, 235, 0.85);
+  }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    background: rgba(22, 27, 34, 0.96);
+    border: 2px solid #58a6ff;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 19px;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Row 0: Multi-Tab Bar -->
+<div id="tabbar">
+  <div id="tabs-list" style="display:flex;gap:8px;overflow-x:auto;flex:1;"></div>
+  <div class="tab-action new-tab" id="btn-new-tab" onclick="createNewTab()">➕ Neuer Tab (Grün)</div>
+  <div class="tab-action" id="btn-close-tab" onclick="closeCurrentTab()">✖ Schließen</div>
+  <div class="tab-action cursor-toggle" id="btn-nav-style" onclick="toggleFreeCursorEverywhere()">🖱️ Freie Maus: EIN</div>
+</div>
+
+<!-- Row 1: Navigation Bar -->
+<div id="navbar">
+  <button class="nav-btn nav-item" onclick="switchToHomeView()">🏠 Start</button>
+  <button class="nav-btn nav-item" onclick="goBackInTab()">⬅</button>
+  <button class="nav-btn nav-item" onclick="reloadCurrentTab()">🔄</button>
+
+  <div id="url-bar" class="nav-item" onclick="openKeyboard('URL')">
+    <span id="url-text">🔍 Webadresse oder Suchbegriff eingeben...</span>
+    <span class="url-badge">⌨️ OK = Tippen</span>
+  </div>
+
+  <button class="nav-btn nav-item" id="btn-star" onclick="toggleFavoriteCurrent()">⭐ Favorit+</button>
+  <button class="nav-btn nav-item" onclick="openPanel('FAVORITES')">⭐ Favoriten</button>
+  <button class="nav-btn nav-item" onclick="openPanel('HISTORY')">🕒 Verlauf</button>
+  <button class="nav-btn nav-item" onclick="toggleAnyFullscreen()">⛶ Vollbild</button>
+</div>
+
+<div id="progress-bar"></div>
+
+<!-- Main Content -->
+<div id="main-area">
+  <!-- Start Dashboard -->
+  <div id="home-view">
+    <div class="hero">
+      <div>
+        <h1>🛡️ AdFree Browser Pro <span style="color:#58a6ff;font-size:20px;">v1.1.5</span></h1>
+        <p>100 % Freie TV-Maus auf allen Seiten & Menüs • Schutz vor WebView-Abstürzen • Favoriten ⭐ & Verlauf 🕒</p>
+      </div>
+      <div class="speed-badge">🛡️ <span id="ad-count">0</span> Ads blockiert</div>
+    </div>
+
+    <!-- Saved Favorites Section on Home Screen -->
+    <div>
+      <div class="grid-title">
+        <span>⭐ Deine gespeicherten Favoriten</span>
+        <span style="font-size:14px;color:#8b949e;text-transform:none;">Oben auf „⭐ Favorit+“ klicken zum Speichern</span>
+      </div>
+      <div class="card-grid" id="home-favorites-grid"></div>
+    </div>
+
+    <!-- Quick Start & Recent History Section -->
+    <div>
+      <div class="grid-title">
+        <span>🕒 Zuletzt besucht (Verlauf) & Verwaltung</span>
+      </div>
+      <div class="card-grid" id="home-history-grid"></div>
+    </div>
+
+    <div class="help-footer">
+      <div><span class="pill">Steuerkreuz</span> Mauszeiger überall frei bewegen & am Rand scrollen</div>
+      <div><span class="pill">OK</span> Element unter dem Mauszeiger anklicken</div>
+      <div><span class="pill">CH ⬆/⬇</span> Scrollen</div>
+      <div><span class="pill red">Rot</span>Vollbild</div>
+      <div><span class="pill green">Grün</span>Neuer Tab</div>
+      <div><span class="pill yellow">Gelb</span>Tastatur/URL</div>
+      <div><span class="pill blue">Blau</span>Favoriten & Verlauf</div>
+    </div>
+  </div>
+
+  <!-- Multi-Tab Pure Direct-DOM Container (Zero Iframes!) -->
+  <div id="web-container"></div>
+</div>
+
+<!-- Dedicated Top-Level Video Fullscreen Layer (Zero Browser/Page Bars, Auto-Hide Controls like Chrome) -->
+<div id="video-fs-layer" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:#000;z-index:99500;">
+  <div id="video-fs-slot" style="width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#000;"></div>
+  <div id="video-fs-hud" style="position:absolute;left:0;right:0;bottom:0;padding:28px 48px 32px 48px;background:linear-gradient(transparent, rgba(0,0,0,0.92));display:flex;flex-direction:column;gap:14px;transition:opacity 0.25s ease;">
+    <div id="video-fs-progress-wrap" style="width:100%;height:14px;background:rgba(255,255,255,0.25);border-radius:999px;cursor:pointer;position:relative;overflow:hidden;">
+      <div id="video-fs-progress-fill" style="height:100%;width:0%;background:#1f6feb;border-radius:999px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button type="button" class="nav-btn" id="fs-btn-toggle" onclick="handleVideoPlayerCommand('toggle')">⏯️ Play / Pause</button>
+        <button type="button" class="nav-btn" id="fs-btn-rew" onclick="handleVideoPlayerCommand('rew')">⏪ -15s</button>
+        <button type="button" class="nav-btn" id="fs-btn-ff" onclick="handleVideoPlayerCommand('ff')">⏩ +15s</button>
+        <span id="video-fs-time" style="color:#fff;font-size:20px;font-weight:700;margin-left:8px;">00:00 / 00:00</span>
+      </div>
+      <button type="button" class="nav-btn" id="fs-btn-exit" style="background:#da3633;border-color:#f85149;" onclick="setTvVideoFullscreen(null, false)">✖ Vollbild beenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Precision TV Mouse Cursor -->
+<div id="cursor">
+  <div id="cursor-ring"><div id="cursor-dot"></div></div>
+  <div id="cursor-label"></div>
+</div>
+
+<!-- Favorites & History Modal -->
+<div id="panel-modal">
+  <div class="panel-box">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">⭐ Gespeicherte Favoriten</div>
+      <div style="display:flex;gap:12px;">
+        <button class="nav-btn panel-focusable" id="panel-switch-btn" onclick="switchPanelTab()">🕒 Zum Verlauf wechseln</button>
+        <button class="nav-btn panel-focusable" id="panel-clear-btn" onclick="clearCurrentPanelList()">🗑️ Liste leeren</button>
+        <button class="nav-btn panel-focusable" id="panel-close-btn" onclick="closePanel()">✖ Schließen</button>
+      </div>
+    </div>
+    <div class="panel-list" id="panel-list-container"></div>
+  </div>
+</div>
+
+<!-- TV On-Screen Keyboard -->
+<div id="keyboard-modal">
+  <div class="kb-box">
+    <div class="kb-top">
+      <div class="kb-title" id="kb-title">⌨️ Webadresse oder Suchbegriff eingeben</div>
+      <div style="color:#8b949e;font-size:17px;">Steuerkreuz + OK • Zurück-Taste zum Schließen</div>
+    </div>
+    <div class="kb-preview"><span id="kb-val"></span><span style="color:#58a6ff;margin-left:2px;">|</span></div>
+    <div class="kb-rows" id="kb-grid"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="hls.min.js"></script>
+<script>
+  try {
+    if (window.tizen && tizen.tvinputdevice) {
+      ['ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue', 'ChannelUp', 'ChannelDown'].forEach(function(k) {
+        try { tizen.tvinputdevice.registerKey(k); } catch(e) {}
+      });
+    }
+  } catch (e) {}
+
+  window.open = function() { return null; };
+
+  function startLocalProxyService() {
+    try {
+      if (window.tizen && tizen.application) {
+        tizen.application.launchAppControl(
+          new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/service'),
+          'AdFreeBrws.ProxyService',
+          function() {},
+          function() {}
+        );
+      }
+    } catch (e) {}
+  }
+  startLocalProxyService();
+
+  var DEFAULT_FAVORITES = [
+    { title: 'SerienStream (186.2.175.5)', url: 'http://186.2.175.5', icon: '📺' },
+    { title: 'Kicker Sport', url: 'https://www.kicker.de', icon: '⚽' },
+    { title: 'Heise Online', url: 'https://www.heise.de', icon: '💻' },
+    { title: 'Google Anmeldung', url: 'https://accounts.google.com/ServiceLogin?hl=de', icon: '🔐' },
+    { title: 'Google Suche', url: 'https://www.google.de/webhp?gbv=1&hl=de', icon: '🔍' },
+    { title: 'net77.cc', url: 'https://net77.cc', icon: '🎬' },
+    { title: 'Tagesschau', url: 'https://www.tagesschau.de', icon: '📰' }
+  ];
+
+  var favorites = [];
+  var historyList = [];
+  var freeCursorEverywhere = true; // Unified free mouse cursor everywhere!
+
+  function fixStoredIpUrls(list) {
+    if (!Array.isArray(list)) return [];
+    return list.map(function(item) {
+      if (item && typeof item.url === 'string') {
+        item.url = item.url.replace(/^https:\/\/((?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:\/.*)?)$/i, 'http://$1');
+      }
+      return item;
+    }).filter(function(item) {
+      return item && item.url && item.url.indexOf('continue=https%3A%2F%2Faccounts.google.com%2Fv3%2Fsignin%2Fidentifier') === -1;
+    });
+  }
+
+  function loadStorage() {
+    try {
+      var favRaw = localStorage.getItem('ag_tv_favorites_v7');
+      if (favRaw) {
+        favorites = fixStoredIpUrls(JSON.parse(favRaw));
+        if (!favorites.some(function(f) { return f.url.indexOf('186.2.175.5') !== -1; })) {
+          favorites.unshift({ title: 'SerienStream (186.2.175.5)', url: 'http://186.2.175.5', icon: '📺' });
+        }
+        if (!favorites.some(function(f) { return f.url.indexOf('accounts.google.com') !== -1; })) {
+          favorites.splice(3, 0, { title: 'Google Anmeldung', url: 'https://accounts.google.com/ServiceLogin?hl=de', icon: '🔐' });
+        }
+        if (!favorites.some(function(f) { return f.url.indexOf('google.de') !== -1; })) {
+          favorites.push({ title: 'Google Suche', url: 'https://www.google.de/webhp?gbv=1&hl=de', icon: '🔍' });
+        }
+        saveFavorites();
+      } else {
+        favorites = DEFAULT_FAVORITES.slice();
+        saveFavorites();
+      }
+      var histRaw = localStorage.getItem('ag_tv_history_v7');
+      if (histRaw) {
+        historyList = fixStoredIpUrls(JSON.parse(histRaw));
+        saveHistory();
+      }
+    } catch (e) {
+      favorites = DEFAULT_FAVORITES.slice();
+      historyList = [];
+    }
+  }
+
+  function saveFavorites() {
+    try { localStorage.setItem('ag_tv_favorites_v7', JSON.stringify(favorites)); } catch(e) {}
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem('ag_tv_history_v7', JSON.stringify(historyList)); } catch(e) {}
+  }
+
+  function addHistoryEntry(title, url) {
+    if (!url) return;
+    historyList = historyList.filter(function(item) { return item.url !== url; });
+    var now = new Date();
+    var timeStr = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    historyList.unshift({ title: title || url, url: url, time: timeStr });
+    if (historyList.length > 50) historyList = historyList.slice(0, 50);
+    saveHistory();
+  }
+
+  function isFavorited(url) {
+    if (!url) return false;
+    return favorites.some(function(f) { return f.url === url; });
+  }
+
+  function updateStarUI() {
+    var tab = tabs[activeTabIndex];
+    var starBtn = document.getElementById('btn-star');
+    if (tab && tab.url && isFavorited(tab.url)) {
+      starBtn.innerText = '★ Gespeichert';
+      starBtn.classList.add('fav-active');
+    } else {
+      starBtn.innerText = '⭐ Favorit+';
+      starBtn.classList.remove('fav-active');
+    }
+  }
+
+  function toggleFavoriteCurrent() {
+    var tab = tabs[activeTabIndex];
+    if (!tab || !tab.url) {
+      openKeyboard('ADD_FAV', '', 'Webadresse als neuen Favoriten speichern');
+      return;
+    }
+    if (isFavorited(tab.url)) {
+      favorites = favorites.filter(function(f) { return f.url !== tab.url; });
+      saveFavorites();
+      updateStarUI();
+      renderHomeDashboard();
+      showToast('🗑️ Aus Favoriten entfernt: ' + tab.title);
+    } else {
+      favorites.unshift({
+        title: tab.title || tab.url,
+        url: tab.url,
+        icon: '⭐'
+      });
+      saveFavorites();
+      updateStarUI();
+      renderHomeDashboard();
+      showToast('⭐ Als Favorit gespeichert: ' + tab.title);
+    }
+  }
+
+  function toggleFreeCursorEverywhere() {
+    freeCursorEverywhere = !freeCursorEverywhere;
+    var btn = document.getElementById('btn-nav-style');
+    if (freeCursorEverywhere) {
+      btn.innerText = '🖱️ Freie Maus: EIN';
+      setMode('CURSOR');
+      showToast('🖱️ Freier Mauszeiger überall aktiv');
+    } else {
+      btn.innerText = '🎯 Kachel-Fokus: EIN';
+      if (document.getElementById('web-container').style.display === 'block') {
+        setMode('CURSOR');
+      } else {
+        setMode('HOME');
+      }
+      showToast('🎯 Kachel-Steuerung auf Startseite aktiv');
+    }
+  }
+
+  function renderHomeDashboard() {
+    var favGrid = document.getElementById('home-favorites-grid');
+    favGrid.innerHTML = '';
+
+    var searchCard = document.createElement('div');
+    searchCard.className = 'site-card home-item';
+    searchCard.innerHTML = '<div class="site-icon">⌨️</div><div class="site-info"><div class="site-title">Suche / URL eingeben</div><div class="site-desc">TV-Tastatur öffnen</div></div>';
+    searchCard.onclick = function() { openKeyboard('URL', ''); };
+    favGrid.appendChild(searchCard);
+
+    favorites.slice(0, 7).forEach(function(fav) {
+      var c = document.createElement('div');
+      c.className = 'site-card home-item';
+      c.innerHTML = '<div class="site-icon">' + (fav.icon || '⭐') + '</div>' +
+        '<div class="site-info"><div class="site-title">' + fav.title + '</div>' +
+        '<div class="site-desc">' + fav.url + '</div></div>';
+      c.onclick = function() {
+        loadUrlInCurrentTab(fav.url, true);
+      };
+      favGrid.appendChild(c);
+    });
+
+    var histGrid = document.getElementById('home-history-grid');
+    histGrid.innerHTML = '';
+
+    var allFavBtn = document.createElement('div');
+    allFavBtn.className = 'site-card home-item';
+    allFavBtn.innerHTML = '<div class="site-icon">⭐</div><div class="site-info"><div class="site-title">Alle Favoriten (' + favorites.length + ')</div><div class="site-desc">Verwalten, hinzufügen & löschen</div></div>';
+    allFavBtn.onclick = function() { openPanel('FAVORITES'); };
+    histGrid.appendChild(allFavBtn);
+
+    var allHistBtn = document.createElement('div');
+    allHistBtn.className = 'site-card home-item';
+    allHistBtn.innerHTML = '<div class="site-icon">🕒</div><div class="site-info"><div class="site-title">Ganzer Verlauf (' + historyList.length + ')</div><div class="site-desc">Besuchte Seiten & Chronik</div></div>';
+    allHistBtn.onclick = function() { openPanel('HISTORY'); };
+    histGrid.appendChild(allHistBtn);
+
+    historyList.slice(0, 2).forEach(function(h) {
+      var hc = document.createElement('div');
+      hc.className = 'site-card home-item';
+      hc.innerHTML = '<div class="site-icon">🕒</div><div class="site-info"><div class="site-title">' + h.title + '</div><div class="site-desc">' + h.time + ' Uhr • ' + h.url + '</div></div>';
+      hc.onclick = function() { loadUrlInCurrentTab(h.url, true); };
+      histGrid.appendChild(hc);
+    });
+  }
+
+  // Favorites & History Panel Modal
+  var currentPanelType = 'FAVORITES';
+  var panelFocusIdx = 0;
+
+  function openPanel(type) {
+    currentPanelType = type || 'FAVORITES';
+    panelFocusIdx = 0;
+    document.getElementById('panel-modal').style.display = 'flex';
+    renderPanelList();
+    setMode('PANEL');
+  }
+
+  function closePanel() {
+    document.getElementById('panel-modal').style.display = 'none';
+    renderHomeDashboard();
+    setMode('CURSOR');
+  }
+
+  function switchPanelTab() {
+    currentPanelType = (currentPanelType === 'FAVORITES') ? 'HISTORY' : 'FAVORITES';
+    panelFocusIdx = 0;
+    renderPanelList();
+    setMode('PANEL');
+  }
+
+  function clearCurrentPanelList() {
+    if (currentPanelType === 'HISTORY') {
+      historyList = [];
+      saveHistory();
+      showToast('🗑️ Verlauf komplett gelöscht');
+    } else {
+      favorites = DEFAULT_FAVORITES.slice();
+      saveFavorites();
+      showToast('⭐ Standard-Favoriten wiederhergestellt');
+    }
+    renderPanelList();
+    setMode('PANEL');
+  }
+
+  function renderPanelList() {
+    var titleEl = document.getElementById('panel-title');
+    var switchBtn = document.getElementById('panel-switch-btn');
+    var clearBtn = document.getElementById('panel-clear-btn');
+    var container = document.getElementById('panel-list-container');
+    container.innerHTML = '';
+
+    var items = (currentPanelType === 'FAVORITES') ? favorites : historyList;
+    if (currentPanelType === 'FAVORITES') {
+      titleEl.innerText = '⭐ Gespeicherte Favoriten (' + items.length + ')';
+      switchBtn.innerText = '🕒 Zum Verlauf wechseln';
+      clearBtn.innerText = '🔄 Standard wiederherstellen';
+    } else {
+      titleEl.innerText = '🕒 Besuchte Webseiten / Verlauf (' + items.length + ')';
+      switchBtn.innerText = '⭐ Zu Favoriten wechseln';
+      clearBtn.innerText = '🗑️ Verlauf löschen';
+    }
+
+    if (items.length === 0) {
+      container.innerHTML = '<div style="padding:36px;text-align:center;color:#8b949e;font-size:22px;">Noch keine Einträge vorhanden.</div>';
+      return;
+    }
+
+    items.forEach(function(item, idx) {
+      var row = document.createElement('div');
+      row.className = 'panel-row';
+
+      var openBtn = document.createElement('button');
+      openBtn.className = 'panel-item-btn panel-focusable';
+      openBtn.innerText = (currentPanelType === 'FAVORITES' ? '⭐ ' : ('🕒 [' + (item.time || '') + '] ')) + item.title + '   —   ' + item.url;
+      openBtn.onclick = function() {
+        closePanel();
+        loadUrlInCurrentTab(item.url, true);
+      };
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'panel-del-btn panel-focusable';
+      delBtn.innerText = '🗑️ Löschen';
+      delBtn.onclick = function() {
+        if (currentPanelType === 'FAVORITES') {
+          favorites.splice(idx, 1);
+          saveFavorites();
+        } else {
+          historyList.splice(idx, 1);
+          saveHistory();
+        }
+        renderPanelList();
+        setMode('PANEL');
+      };
+
+      row.appendChild(openBtn);
+      row.appendChild(delBtn);
+      container.appendChild(row);
+    });
+  }
+
+  var AD_PATTERNS = [
+    /doubleclick\.net/i, /googlesyndication\.com/i, /googleadservices\.com/i,
+    /googletagmanager\.com/i, /googletagservices\.com/i, /adnxs\.com/i,
+    /criteo\.(com|net)/i, /outbrain\.com/i, /taboola\.com/i, /popads\.net/i,
+    /adform\.net/i, /rubiconproject\.com/i, /pubmatic\.com/i, /openx\.net/i,
+    /smartadserver\.com/i, /quantserve\.com/i, /scorecardresearch\.com/i,
+    /amazon-adsystem\.com/i, /ioam\.de/i, /ivwbox\.de/i, /yieldlab\.net/i,
+    /stroeerdigitalgroup\.de/i, /adition\.com/i, /onetrust/i, /cookiebot/i
+  ];
+
+  var totalBlockedAds = 0;
+
+  function resolveRelativeUrl(rel, base) {
+    if (!rel) return '';
+    rel = rel.trim().replace(/&amp;/g, '&');
+    if (rel.startsWith('http://') || rel.startsWith('https://') || rel.startsWith('data:') || rel.startsWith('mailto:') || rel.startsWith('javascript:') || rel.startsWith('#')) {
+      return rel;
+    }
+    try { return new URL(rel, base).href; } catch (e) { return rel; }
+  }
+
+  function extractUrlFromOnclick(code, base) {
+    if (!code) return '';
+    var m = code.match(/(?:location(?:\.href)?\s*=\s*|window\.open\s*\(\s*|location\.(?:assign|replace)\s*\(\s*)['"]([^'"]+)['"]/i);
+    if (m && m[1]) return resolveRelativeUrl(m[1], base);
+    var m2 = code.match(/['"](https?:\/\/[^'"]+|\/[a-zA-Z0-9_\-\/.?=&%]+)['"]/i);
+    if (m2 && m2[1]) return resolveRelativeUrl(m2[1], base);
+    return '';
+  }
+
+  function getParentEl(node) {
+    if (!node) return null;
+    return node.parentElement || (node.parentNode && node.parentNode.nodeType === 1 ? node.parentNode : null);
+  }
+
+  function findLinkTarget(el) {
+    var cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.getAttribute) {
+        var agHref = cur.getAttribute('data-ag-href');
+        if (agHref && agHref !== 'javascript:void(0)' && !agHref.startsWith('#')) return cur;
+        if ((cur.tagName || '').toUpperCase() === 'A') {
+          var rawH = cur.getAttribute('href');
+          if (rawH && rawH !== 'javascript:void(0)' && !rawH.startsWith('#')) return cur;
+        }
+      }
+      cur = getParentEl(cur);
+    }
+    return null;
+  }
+
+  function findClosestTag(el, tagNameUpper) {
+    var cur = el;
+    while (cur && cur !== document.body) {
+      if ((cur.tagName || '').toUpperCase() === tagNameUpper) return cur;
+      cur = getParentEl(cur);
+    }
+    return null;
+  }
+
+  function findActionableTarget(el) {
+    if (!el) return null;
+    var linkT = findLinkTarget(el);
+    var cur = el;
+    while (cur && cur !== document.body) {
+      var tag = (cur.tagName || '').toUpperCase();
+      if (cur.id === 'url-bar') return cur;
+      if (cur.classList && (cur.classList.contains('site-card') || cur.classList.contains('nav-btn') || cur.classList.contains('tab-pill') || cur.classList.contains('tab-action'))) {
+        return cur;
+      }
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A') {
+        if (linkT && (tag === 'BUTTON' || (cur.getAttribute && cur.getAttribute('role') === 'button')) && !findClosestTag(cur, 'FORM')) {
+          return linkT;
+        }
+        return cur;
+      }
+      if (cur.getAttribute && (cur.getAttribute('data-ag-play-url') || cur.getAttribute('data-play-url') || cur.getAttribute('data-vid-cmd'))) {
+        return cur;
+      }
+      if (cur.getAttribute && (cur.getAttribute('data-ag-href') || cur.getAttribute('role') === 'button' || cur.getAttribute('onclick'))) {
+        if (linkT && !cur.getAttribute('onclick')) return linkT;
+        return cur;
+      }
+      cur = getParentEl(cur);
+    }
+    return linkT || el;
+  }
+
+  function sanitizeDomLinksAndForms(rootNode, baseUrl) {
+    var anchors = rootNode.querySelectorAll('a');
+    for (var n = 0; n < anchors.length; n++) {
+      var a = anchors[n];
+      var aHref = a.getAttribute('href');
+      a.removeAttribute('target');
+      if (aHref && !aHref.startsWith('#') && !aHref.startsWith('javascript:')) {
+        var resolvedHref = resolveRelativeUrl(aHref, baseUrl);
+        a.setAttribute('data-ag-href', resolvedHref);
+        a.setAttribute('href', 'javascript:void(0)');
+      } else if (!a.getAttribute('data-ag-href')) {
+        a.setAttribute('href', 'javascript:void(0)');
+      }
+    }
+    var forms = rootNode.querySelectorAll('form');
+    for (var p = 0; p < forms.length; p++) {
+      var f = forms[p];
+      var act = f.getAttribute('action') || baseUrl;
+      f.removeAttribute('target');
+      if (act !== 'javascript:void(0)') {
+        f.setAttribute('data-ag-action', resolveRelativeUrl(act, baseUrl));
+        f.setAttribute('action', 'javascript:void(0)');
+      }
+    }
+  }
+
+  function renderHtmlIntoPane(rawHtml, finalUrl, pane, tab) {
+    var isGoogleAuthPage = finalUrl.indexOf('accounts.google.com') !== -1;
+
+    // Detect embedded Google OAuth URLs in raw HTML/scripts before stripping scripts
+    tab.detectedGoogleAuthUrl = '';
+    var gMatch = rawHtml.match(/https?:\/\/accounts\.google\.com\/(?:o\/oauth2\/v2\/auth|o\/oauth2\/auth|ServiceLogin|v3\/signin\/identifier)[^"'\s<>\\)]*/i);
+    if (gMatch && gMatch[0]) {
+      tab.detectedGoogleAuthUrl = gMatch[0].replace(/\\u0026/g, '&').replace(/&amp;/g, '&');
+    } else {
+      var relGMatch = rawHtml.match(/['"](\/(?:auth|login|oauth|oauth2|connect|sso)\/google[^"'\s<>\\)]*|\/login-status\?google=yes[^"'\s<>\\)]*)['"]/i);
+      if (relGMatch && relGMatch[1]) {
+        tab.detectedGoogleAuthUrl = resolveRelativeUrl(relGMatch[1], finalUrl);
+      }
+    }
+
+    var parser = new DOMParser();
+    var htmlToParse = isGoogleAuthPage
+      ? rawHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+      : rawHtml;
+    var parsedDoc = parser.parseFromString(htmlToParse, 'text/html');
+
+    if (parsedDoc.title) {
+      tab.title = parsedDoc.title.substring(0, 28);
+      renderTabBar();
+    }
+    addHistoryEntry(tab.title, finalUrl);
+    updateStarUI();
+
+    var baseUrlForLinks = finalUrl;
+    var baseTagEl = parsedDoc.querySelector('base[href]');
+    if (baseTagEl && baseTagEl.getAttribute('href')) {
+      baseUrlForLinks = resolveRelativeUrl(baseTagEl.getAttribute('href'), finalUrl);
+    }
+
+    // Remove meta refresh & base tags that could hijack top window navigation (IDS_WEBVIEW_BODY_UNABLE_TO_LOAD_THE_PAGE_PS_MAY_BE_TEMPORARILY)
+    var metas = parsedDoc.querySelectorAll('meta[http-equiv="refresh"], meta[http-equiv="Refresh"], base');
+    for (var mr = 0; mr < metas.length; mr++) {
+      if (metas[mr].parentNode) metas[mr].parentNode.removeChild(metas[mr]);
+    }
+
+    var allNodes = parsedDoc.querySelectorAll('*');
+    for (var an = 0; an < allNodes.length; an++) {
+      var nodeEl = allNodes[an];
+      var dataUrlAttr = nodeEl.getAttribute('data-url') || nodeEl.getAttribute('data-href') || nodeEl.getAttribute('data-redirect') || nodeEl.getAttribute('data-login-url');
+      if (dataUrlAttr && !nodeEl.getAttribute('data-ag-href')) {
+        nodeEl.setAttribute('data-ag-href', resolveRelativeUrl(dataUrlAttr, baseUrlForLinks));
+      }
+      var attrs = nodeEl.attributes;
+      if (attrs) {
+        for (var ai = attrs.length - 1; ai >= 0; ai--) {
+          var aName = attrs[ai].name.toLowerCase();
+          var aVal = attrs[ai].value || '';
+          if (aName === 'formaction') {
+            var resolvedFormAct = resolveRelativeUrl(aVal, baseUrlForLinks);
+            nodeEl.setAttribute('data-ag-formaction', resolvedFormAct);
+            if (!findClosestTag(nodeEl, 'FORM') && !nodeEl.getAttribute('data-ag-href')) {
+              nodeEl.setAttribute('data-ag-href', resolvedFormAct);
+            }
+            nodeEl.removeAttribute(attrs[ai].name);
+          } else if (aName === 'onclick') {
+            var extracted = extractUrlFromOnclick(aVal, baseUrlForLinks);
+            if (extracted && !nodeEl.getAttribute('data-ag-href')) {
+              nodeEl.setAttribute('data-ag-href', extracted);
+            }
+            nodeEl.removeAttribute(attrs[ai].name);
+          } else if (aName.indexOf('on') === 0) {
+            nodeEl.removeAttribute(attrs[ai].name);
+          }
+        }
+      }
+    }
+
+    // Detect embedded video player (#player-iframe / data-play-url on 186.2.175.5) before removing iframes
+    var initialVideoPlayUrl = '';
+    var firstVoeUrl = '';
+    var firstAnyPlayUrl = '';
+    var streamPickerButtonsHtml = '';
+    var playButtons = parsedDoc.querySelectorAll('[data-play-url]');
+    for (var pb = 0; pb < playButtons.length; pb++) {
+      var pbEl = playButtons[pb];
+      var rawPlayUrl = pbEl.getAttribute('data-play-url');
+      if (rawPlayUrl) {
+        var absPlayUrl = resolveRelativeUrl(rawPlayUrl, baseUrlForLinks);
+        pbEl.setAttribute('data-ag-play-url', absPlayUrl);
+        var provName = (pbEl.getAttribute('data-provider-name') || 'Stream').trim();
+        var langLabel = (pbEl.getAttribute('data-language-label') || '').trim();
+        if (!firstAnyPlayUrl) firstAnyPlayUrl = absPlayUrl;
+        if (provName.toUpperCase() === 'VOE') {
+          if (!firstVoeUrl) firstVoeUrl = absPlayUrl;
+          var btnTitle = '🎬 ' + provName + (langLabel ? (' (' + langLabel + ')') : '');
+          streamPickerButtonsHtml +=
+            '<button type="button" class="ag-vid-btn" data-ag-play-url="' + absPlayUrl + '" data-provider-name="' + provName + '" data-language-label="' + langLabel + '" style="background:#1f293d;color:#58a6ff;border:2px solid #388bfd;border-radius:10px;padding:10px 18px;font-size:18px;font-weight:700;cursor:pointer;">' + btnTitle + '</button>';
+        }
+      }
+    }
+    initialVideoPlayUrl = firstVoeUrl || firstAnyPlayUrl;
+    window.__currentEpisodeFallbackVoeUrl = firstVoeUrl || '';
+
+    var playerIframeEl = parsedDoc.querySelector('iframe#player-iframe, iframe[name="player-iframe"], iframe[src*="/r?t="]');
+    if (playerIframeEl) {
+      if (!initialVideoPlayUrl && playerIframeEl.getAttribute('src')) {
+        initialVideoPlayUrl = resolveRelativeUrl(playerIframeEl.getAttribute('src'), baseUrlForLinks);
+      }
+      var playerBox = parsedDoc.createElement('div');
+      playerBox.className = 'ag-tv-player-container';
+      playerBox.setAttribute('style', 'background:#090d16;border:2px solid #388bfd;border-radius:16px;padding:18px;margin:12px 0 20px 0;display:flex;flex-direction:column;gap:14px;');
+      playerBox.innerHTML =
+        '<div id="ag-video-status" style="color:#58a6ff;font-size:20px;font-weight:700;">🎬 Lade werbefreien Direkt-Stream...</div>' +
+        '<video id="ag-native-video" controls autoplay playsinline style="width:100%;max-height:520px;min-height:360px;background:#000;border-radius:12px;display:block;"></video>' +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">' +
+        '<button type="button" class="ag-vid-btn" data-vid-cmd="toggle" style="background:#1f6feb;color:#fff;border:2px solid #58a6ff;border-radius:10px;padding:10px 22px;font-size:19px;font-weight:700;cursor:pointer;">⏯️ Play / Pause</button>' +
+        '<button type="button" class="ag-vid-btn" data-vid-cmd="rew" style="background:#21262d;color:#fff;border:2px solid #30363d;border-radius:10px;padding:10px 18px;font-size:18px;font-weight:700;cursor:pointer;">⏪ -30s</button>' +
+        '<button type="button" class="ag-vid-btn" data-vid-cmd="ff" style="background:#21262d;color:#fff;border:2px solid #30363d;border-radius:10px;padding:10px 18px;font-size:18px;font-weight:700;cursor:pointer;">⏩ +30s</button>' +
+        '<button type="button" class="ag-vid-btn" data-vid-cmd="fs" style="background:#238636;color:#fff;border:2px solid #3fb950;border-radius:10px;padding:10px 22px;font-size:19px;font-weight:700;cursor:pointer;">⛶ TV-Vollbild</button>' +
+        streamPickerButtonsHtml +
+        '</div>';
+      if (playerIframeEl.parentNode) {
+        playerIframeEl.parentNode.replaceChild(playerBox, playerIframeEl);
+      }
+    }
+
+    // Collect non-ad scripts before removing them so SPA / IP web apps can execute them if needed
+    var pageScriptsToRun = [];
+    var scripts = parsedDoc.querySelectorAll('script, noscript, iframe, object, embed');
+    for (var i = 0; i < scripts.length; i++) {
+      var s = scripts[i];
+      var src = s.getAttribute('src') || '';
+      var isAdScript = false;
+      for (var j = 0; j < AD_PATTERNS.length; j++) {
+        if (AD_PATTERNS[j].test(src)) { totalBlockedAds++; isAdScript = true; break; }
+      }
+      if (!isAdScript && (s.tagName || '').toUpperCase() === 'SCRIPT' && !isGoogleAuthPage) {
+        var sType = (s.getAttribute('type') || '').toLowerCase();
+        if (!sType || sType === 'text/javascript' || sType === 'application/javascript' || sType === 'module') {
+          pageScriptsToRun.push({
+            src: src ? resolveRelativeUrl(src, baseUrlForLinks) : '',
+            code: s.textContent || '',
+            type: sType
+          });
+        }
+      }
+      if (s.parentNode) s.parentNode.removeChild(s);
+    }
+    document.getElementById('ad-count').innerText = totalBlockedAds;
+
+    // If Google GlifWebSignIn rendered inputs without a <form>, wrap them so the "Weiter" button works!
+    var gIdentInput = parsedDoc.querySelector('input[name="identifier"], input#identifierId');
+    if (gIdentInput && !findClosestTag(gIdentInput, 'FORM') && parsedDoc.body) {
+      var autoForm = parsedDoc.createElement('form');
+      autoForm.setAttribute('method', 'POST');
+      autoForm.setAttribute('action', finalUrl);
+      while (parsedDoc.body.firstChild) {
+        autoForm.appendChild(parsedDoc.body.firstChild);
+      }
+      parsedDoc.body.appendChild(autoForm);
+      var gBtns = autoForm.querySelectorAll('button');
+      for (var gb = 0; gb < gBtns.length; gb++) {
+        var bTxt = (gBtns[gb].textContent || '').toLowerCase();
+        if (bTxt.indexOf('weiter') !== -1 || bTxt.indexOf('next') !== -1 || gBtns[gb].id === 'identifierNext') {
+          gBtns[gb].setAttribute('type', 'submit');
+          gBtns[gb].setAttribute('name', 'action');
+          gBtns[gb].setAttribute('value', '1');
+        }
+      }
+    }
+
+    var isDarkSite = finalUrl.indexOf('186.2.175.5') !== -1 ||
+                     finalUrl.indexOf('net77.cc') !== -1 ||
+                     /data-bs-theme=["']dark["']|class=["'][^"']*dark/i.test(rawHtml.substring(0, 2000));
+
+    var stylesWrapper = document.createElement('div');
+    if (isGoogleAuthPage) {
+      var gStyle = document.createElement('style');
+      gStyle.textContent =
+        '.ag-page-body { background: #0d1117 !important; color: #f0f6fc !important; padding: 40px 80px !important; font-size: 22px !important; }' +
+        '.ag-page-body form { max-width: 680px; margin: 20px auto; background: #161b22; border: 2px solid #30363d; border-radius: 18px; padding: 36px; display: flex; flex-direction: column; gap: 18px; }' +
+        '.ag-page-body input[type="text"], .ag-page-body input[type="email"], .ag-page-body input[type="password"], .ag-page-body input:not([type]) { width: 100%; height: 58px; background: #0d1117 !important; color: #ffffff !important; border: 2px solid #388bfd !important; border-radius: 12px !important; padding: 0 18px !important; font-size: 24px !important; display: block !important; visibility: visible !important; opacity: 1 !important; }' +
+        '.ag-page-body input[name="hiddenPassword"], .ag-page-body input[type="hidden"] { display: none !important; }' +
+        '.ag-page-body button, .ag-page-body input[type="submit"] { background: #1f6feb !important; color: #ffffff !important; border: 2px solid #58a6ff !important; border-radius: 12px !important; padding: 14px 28px !important; font-size: 22px !important; font-weight: 700 !important; cursor: pointer !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; margin-top: 10px; }' +
+        '.ag-page-body a { color: #58a6ff !important; font-size: 20px !important; text-decoration: underline !important; }' +
+        '.ag-page-body svg { max-width: 72px !important; max-height: 48px !important; }';
+      stylesWrapper.appendChild(gStyle);
+    } else {
+      var links = parsedDoc.querySelectorAll('link[rel="stylesheet"], style');
+      for (var k = 0; k < links.length; k++) {
+        var l = links[k];
+        if (l.tagName === 'LINK') {
+          var href = l.getAttribute('href');
+          if (href) {
+            var newLink = document.createElement('link');
+            newLink.rel = 'stylesheet';
+            newLink.href = resolveRelativeUrl(href, baseUrlForLinks);
+            stylesWrapper.appendChild(newLink);
+          }
+        } else if (l.tagName === 'STYLE') {
+          var cssText = (l.textContent || '')
+            .replace(/overflow\s*:\s*hidden\s*!important/gi, 'overflow: visible')
+            .replace(/body\s*\{/gi, '.ag-page-body {');
+          var newStyle = document.createElement('style');
+          newStyle.textContent = cssText;
+          stylesWrapper.appendChild(newStyle);
+        }
+      }
+      var fixStyle = document.createElement('style');
+      fixStyle.textContent =
+        '.ag-page-body { opacity: 1 !important; visibility: visible !important; display: block !important; overflow: visible !important; min-height: 100%; padding: 16px 24px; font-size: 18px; line-height: 1.5; ' +
+        (isDarkSite ? 'background: #0f131d; color: #f0f6fc;' : 'background: #ffffff; color: #111111;') + ' }' +
+        (isDarkSite ? '.ag-page-body a { color: #58a6ff; } ' : '') +
+        '.ag-page-body * { max-width: 100%; }' +
+        '.ag-page-body img { max-width: 100%; height: auto; }' +
+        '.ag-page-body [style*="opacity: 0"], .ag-page-body [style*="opacity:0"], .ag-page-body [style*="visibility: hidden"] { opacity: 1 !important; visibility: visible !important; }';
+      stylesWrapper.appendChild(fixStyle);
+    }
+
+    var imgs = parsedDoc.querySelectorAll('img, source');
+    for (var m = 0; m < imgs.length; m++) {
+      var img = imgs[m];
+      var srcAttr = img.getAttribute('data-src') || img.getAttribute('data-original') || img.getAttribute('data-lazy-src') || img.getAttribute('src');
+      if ((!srcAttr || srcAttr.indexOf('data:image/gif') === 0 || srcAttr.indexOf('data:image/svg') === 0) && img.getAttribute('srcset')) {
+        var firstSrcset = img.getAttribute('srcset').split(',')[0].trim().split(/\s+/)[0];
+        if (firstSrcset) srcAttr = firstSrcset;
+      }
+      if (srcAttr) img.setAttribute('src', resolveRelativeUrl(srcAttr, baseUrlForLinks));
+      if (img.getAttribute('srcset')) img.removeAttribute('srcset');
+    }
+
+    sanitizeDomLinksAndForms(parsedDoc, baseUrlForLinks);
+
+    pane.innerHTML = '';
+    pane.appendChild(stylesWrapper);
+
+    var contentWrapper = document.createElement('div');
+    contentWrapper.className = 'ag-page-body' + (parsedDoc.body && parsedDoc.body.className ? (' ' + parsedDoc.body.className) : '');
+    contentWrapper.innerHTML = parsedDoc.body ? parsedDoc.body.innerHTML : rawHtml;
+    pane.appendChild(contentWrapper);
+    pane.scrollTop = 0;
+
+    if (initialVideoPlayUrl) {
+      playExtractedStreamInPane(initialVideoPlayUrl, finalUrl, contentWrapper, 0);
+    }
+
+    // If the page is a JS-rendered SPA (e.g. a local IP web interface with an empty <div id="root"> or <div id="app">), execute its non-ad scripts
+    var visibleTextLen = (contentWrapper.innerText || contentWrapper.textContent || '').trim().length;
+    if (!isGoogleAuthPage && visibleTextLen < 40 && pageScriptsToRun.length > 0) {
+      for (var si = 0; si < pageScriptsToRun.length; si++) {
+        try {
+          var sInfo = pageScriptsToRun[si];
+          var dynScript = document.createElement('script');
+          if (sInfo.type) dynScript.type = sInfo.type;
+          if (sInfo.src) {
+            dynScript.src = sInfo.src;
+          } else if (sInfo.code) {
+            dynScript.textContent = sInfo.code;
+          }
+          contentWrapper.appendChild(dynScript);
+        } catch (err) {}
+      }
+      setTimeout(function() {
+        sanitizeDomLinksAndForms(contentWrapper, baseUrlForLinks);
+      }, 600);
+    }
+
+    contentWrapper.addEventListener('click', function(e) {
+      var cur = e.target;
+      while (cur && cur !== contentWrapper) {
+        if (cur.getAttribute) {
+          var vidCmd = cur.getAttribute('data-vid-cmd');
+          if (vidCmd) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleVideoPlayerCommand(vidCmd, contentWrapper);
+            return;
+          }
+          var playHref = cur.getAttribute('data-ag-play-url');
+          if (playHref) {
+            e.preventDefault();
+            e.stopPropagation();
+            playExtractedStreamInPane(playHref, finalUrl, contentWrapper, 0);
+            return;
+          }
+        }
+        cur = cur.parentElement || cur.parentNode;
+      }
+
+      var linkEl = findLinkTarget(e.target);
+      if (linkEl) {
+        e.preventDefault();
+        e.stopPropagation();
+        var targetHref = linkEl.getAttribute('data-ag-href') || linkEl.getAttribute('href');
+        if (targetHref && targetHref !== 'javascript:void(0)') {
+          loadUrlInCurrentTab(targetHref, true);
+        }
+        return;
+      }
+      var actEl = findActionableTarget(e.target);
+      if (actEl) {
+        var formParent = findClosestTag(actEl, 'FORM');
+        var aTag = (actEl.tagName || '').toUpperCase();
+        var aType = (actEl.getAttribute && (actEl.getAttribute('type') || '')).toLowerCase();
+        if (formParent && (aTag === 'BUTTON' || aType === 'submit' || aType === 'button')) {
+          e.preventDefault();
+          e.stopPropagation();
+          submitFormViaFetch(formParent, tab, actEl);
+          return;
+        }
+        if (handleDynamicGoogleAuthClick(actEl, tab)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    }, true);
+
+    contentWrapper.addEventListener('submit', function(e) {
+      var formEl = e.target;
+      if (!formEl || (formEl.tagName || '').toUpperCase() !== 'FORM') return;
+      e.preventDefault();
+      e.stopPropagation();
+      submitFormViaFetch(formEl, tab, null);
+    }, true);
+  }
+
+  var isTvVideoFullscreen = false;
+  var fsHudVisible = false;
+
+  function formatVideoTime(sec) {
+    if (!sec || !isFinite(sec) || sec < 0) return '00:00';
+    var total = Math.floor(sec);
+    var hrs = Math.floor(total / 3600);
+    var mins = Math.floor((total % 3600) / 60);
+    var secs = total % 60;
+    var mStr = (mins < 10 ? '0' : '') + mins;
+    var sStr = (secs < 10 ? '0' : '') + secs;
+    return hrs > 0 ? (hrs + ':' + mStr + ':' + sStr) : (mStr + ':' + sStr);
+  }
+
+  function updateVideoFsTimeline(v) {
+    v = v || document.getElementById('ag-native-video');
+    if (!v) return;
+    var fill = document.getElementById('video-fs-progress-fill');
+    var timeEl = document.getElementById('video-fs-time');
+    var dur = (v.duration && isFinite(v.duration) && v.duration > 0) ? v.duration : 0;
+    var cur = v.currentTime || 0;
+    if (fill) {
+      fill.style.width = dur > 0 ? Math.min(100, Math.max(0, (cur / dur) * 100)).toFixed(2) + '%' : '0%';
+    }
+    if (timeEl) {
+      timeEl.innerText = formatVideoTime(cur) + ' / ' + (dur > 0 ? formatVideoTime(dur) : '--:--');
+    }
+  }
+
+  function wakeVideoFsHud() {
+    if (!isTvVideoFullscreen) return;
+    fsHudVisible = true;
+    var hud = document.getElementById('video-fs-hud');
+    if (hud) {
+      hud.style.opacity = '1';
+      hud.style.pointerEvents = 'auto';
+    }
+    var c = document.getElementById('cursor');
+    if (c && mode === 'CURSOR') {
+      c.style.display = 'block';
+    }
+    updateVideoFsTimeline();
+    clearTimeout(window.__fsHudTimer);
+    window.__fsHudTimer = setTimeout(function() {
+      if (!isTvVideoFullscreen) return;
+      fsHudVisible = false;
+      var h = document.getElementById('video-fs-hud');
+      if (h) {
+        h.style.opacity = '0';
+        h.style.pointerEvents = 'none';
+      }
+      var curEl = document.getElementById('cursor');
+      if (curEl) curEl.style.display = 'none';
+    }, 2500);
+  }
+
+  function setTvVideoFullscreen(v, enable) {
+    v = v || document.getElementById('ag-native-video');
+    isTvVideoFullscreen = !!enable;
+    var fsLayer = document.getElementById('video-fs-layer');
+    var fsSlot = document.getElementById('video-fs-slot');
+
+    if (isTvVideoFullscreen && v) {
+      if (v.parentNode && v.parentNode !== fsSlot) {
+        var oldPh = document.getElementById('ag-video-placeholder');
+        if (oldPh && oldPh.parentNode) oldPh.parentNode.removeChild(oldPh);
+        var ph = document.createElement('div');
+        ph.id = 'ag-video-placeholder';
+        ph.style.display = 'none';
+        v.parentNode.insertBefore(ph, v);
+        fsSlot.appendChild(v);
+      }
+      v.removeAttribute('controls');
+      v.setAttribute('style', 'width:100vw;height:100vh;max-height:100vh;object-fit:contain;background:#000;display:block;');
+      document.body.classList.add('video-fullscreen');
+      if (fsLayer) fsLayer.style.display = 'block';
+
+      v.ontimeupdate = function() {
+        if (isTvVideoFullscreen) updateVideoFsTimeline(v);
+      };
+      var progWrap = document.getElementById('video-fs-progress-wrap');
+      if (progWrap) {
+        progWrap.onclick = function(ev) {
+          var rect = progWrap.getBoundingClientRect();
+          var clickX = (ev && ev.clientX) ? ev.clientX : cursorX;
+          if (rect.width > 0 && v.duration && isFinite(v.duration)) {
+            var ratio = Math.max(0, Math.min(1, (clickX - rect.left) / rect.width));
+            v.currentTime = ratio * v.duration;
+            updateVideoFsTimeline(v);
+          }
+          wakeVideoFsHud();
+        };
+      }
+      wakeVideoFsHud();
+      showToast('⛶ Vollbild aktiv • Leiste blendet nach 2s automatisch aus');
+    } else {
+      isTvVideoFullscreen = false;
+      fsHudVisible = false;
+      clearTimeout(window.__fsHudTimer);
+      if (fsLayer) fsLayer.style.display = 'none';
+      document.body.classList.remove('video-fullscreen');
+      if (v) {
+        v.setAttribute('controls', 'controls');
+        v.setAttribute('style', 'width:100%;max-height:520px;min-height:360px;background:#000;border-radius:12px;display:block;');
+        var placeholder = document.getElementById('ag-video-placeholder');
+        if (placeholder && placeholder.parentNode) {
+          placeholder.parentNode.insertBefore(v, placeholder);
+          placeholder.parentNode.removeChild(placeholder);
+        }
+      }
+      if (mode === 'CURSOR') {
+        document.getElementById('cursor').style.display = 'block';
+      }
+    }
+  }
+
+  function toggleBrowserFullscreen(forceState) {
+    var nextState = typeof forceState === 'boolean'
+      ? forceState
+      : !document.body.classList.contains('browser-fullscreen');
+    document.body.classList.toggle('browser-fullscreen', nextState);
+    document.body.classList.remove('peek-bars');
+    if (nextState) {
+      showToast('⛶ Vollbild wie Chrome aktiv • Maus ganz nach oben = Leiste zeigen');
+    } else {
+      showToast('⛶ Vollbild beendet');
+    }
+  }
+
+  function toggleAnyFullscreen() {
+    if (isTvVideoFullscreen) {
+      setTvVideoFullscreen(null, false);
+      return;
+    }
+    if (document.getElementById('web-container').style.display === 'block') {
+      var pane = getActivePane();
+      var v = (pane && pane.querySelector('#ag-native-video')) || document.getElementById('ag-native-video');
+      if (v) {
+        setTvVideoFullscreen(v, true);
+        return;
+      }
+    }
+    toggleBrowserFullscreen();
+  }
+
+  function handleVideoPlayerCommand(cmd, containerEl) {
+    var v = (containerEl && containerEl.querySelector('#ag-native-video')) || document.getElementById('ag-native-video');
+    if (!v) return;
+    if (cmd === 'toggle') {
+      if (v.paused) {
+        var p = v.play();
+        if (p && p.catch) p.catch(function() {});
+        showToast('▶️ Wiedergabe');
+      } else {
+        v.pause();
+        showToast('⏸️ Pause');
+      }
+      if (isTvVideoFullscreen) wakeVideoFsHud();
+    } else if (cmd === 'rew') {
+      var stepBack = isTvVideoFullscreen ? 15 : 30;
+      v.currentTime = Math.max(0, (v.currentTime || 0) - stepBack);
+      showToast('⏪ -' + stepBack + ' Sekunden');
+      if (isTvVideoFullscreen) wakeVideoFsHud();
+    } else if (cmd === 'ff') {
+      var stepFwd = isTvVideoFullscreen ? 15 : 30;
+      v.currentTime = (v.currentTime || 0) + stepFwd;
+      showToast('⏩ +' + stepFwd + ' Sekunden');
+      if (isTvVideoFullscreen) wakeVideoFsHud();
+    } else if (cmd === 'fs') {
+      setTvVideoFullscreen(v, !isTvVideoFullscreen);
+    }
+  }
+
+  function playExtractedStreamInPane(playUrl, refererUrl, containerEl, retryCount, usedFallback) {
+    retryCount = retryCount || 0;
+    var statusEl = (containerEl && containerEl.querySelector('#ag-video-status')) || document.getElementById('ag-video-status');
+    var videoEl = (containerEl && containerEl.querySelector('#ag-native-video')) || document.getElementById('ag-native-video');
+    if (statusEl) {
+      statusEl.style.color = '#58a6ff';
+      statusEl.innerText = '🎬 Entschlüssele werbefreien Direkt-Stream...';
+    }
+
+    var svcPort = (retryCount % 2 === 1) ? 8123 : 8124;
+    var endpoint = 'http://127.0.0.1:' + svcPort + '/extract-video?url=' + encodeURIComponent(playUrl) + '&referer=' + encodeURIComponent(refererUrl || 'http://186.2.175.5/');
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', endpoint, true);
+    xhr.timeout = 14000;
+    xhr.onload = function() {
+      try {
+        var data = JSON.parse(xhr.responseText || '{}');
+        if (data && data.ok && data.streamUrl && videoEl) {
+          if (statusEl) {
+            statusEl.style.color = '#3fb950';
+            statusEl.innerText = '✅ Werbefreier HD-Stream aktiv' + (data.title ? (': ' + data.title) : '');
+          }
+          if (window.__activeHls) {
+            try { window.__activeHls.destroy(); } catch (e) {}
+            window.__activeHls = null;
+          }
+          if (window.Hls && Hls.isSupported() && data.streamUrl.indexOf('.m3u8') !== -1) {
+            var hls = new Hls({ enableWorker: false });
+            window.__activeHls = hls;
+            hls.loadSource(data.streamUrl);
+            hls.attachMedia(videoEl);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+              var playProm = videoEl.play();
+              if (playProm && playProm.catch) playProm.catch(function() {});
+            });
+          } else {
+            videoEl.src = data.streamUrl;
+            var playProm2 = videoEl.play();
+            if (playProm2 && playProm2.catch) playProm2.catch(function() {});
+          }
+          return;
+        }
+      } catch (e) {}
+      if (!usedFallback && window.__currentEpisodeFallbackVoeUrl && window.__currentEpisodeFallbackVoeUrl !== playUrl) {
+        showToast('🔄 Hoster offline – wechsle automatisch zu VOE...');
+        playExtractedStreamInPane(window.__currentEpisodeFallbackVoeUrl, refererUrl, containerEl, 0, true);
+        return;
+      }
+      if (statusEl) {
+        statusEl.style.color = '#ff7b72';
+        statusEl.innerText = '⚠️ Dieser Hoster ist offline – bitte oben auf 🎬 VOE (Deutsch/Englisch) klicken.';
+      }
+    };
+    xhr.onerror = function() {
+      if (retryCount < 5) {
+        startLocalProxyService();
+        setTimeout(function() {
+          playExtractedStreamInPane(playUrl, refererUrl, containerEl, retryCount + 1, usedFallback);
+        }, 700);
+        return;
+      }
+      if (statusEl) {
+        statusEl.style.color = '#ff7b72';
+        statusEl.innerText = '⚠️ Lokaler Stream-Dienst nicht erreichbar – bitte erneut versuchen.';
+      }
+    };
+    xhr.ontimeout = xhr.onerror;
+    xhr.send(null);
+  }
+
+  function handleDynamicGoogleAuthClick(el, tab) {
+    if (!el || !tab) return false;
+    var combined = (
+      (el.innerText || el.textContent || '') + ' ' +
+      (el.getAttribute && (el.getAttribute('aria-label') || '') || '') + ' ' +
+      (el.getAttribute && (el.getAttribute('title') || '') || '') + ' ' +
+      (el.id || '') + ' ' +
+      (typeof el.className === 'string' ? el.className : '')
+    ).toLowerCase();
+
+    if (combined.indexOf('google') !== -1 || (combined.indexOf('anmelden') !== -1 && tab.url && tab.url.indexOf('google.') !== -1)) {
+      var currentTabUrl = (tab.url && tab.url.indexOf('accounts.google.com') === -1) ? tab.url : 'https://www.google.de/webhp?gbv=1&hl=de';
+      var dest = tab.detectedGoogleAuthUrl || ('https://accounts.google.com/ServiceLogin?hl=de&flowName=WebLiteSignIn&continue=' + encodeURIComponent(currentTabUrl));
+      loadUrlInCurrentTab(dest, true);
+      return true;
+    }
+    return false;
+  }
+
+  function submitFormViaFetch(formEl, tab, submitterEl) {
+    var action = (submitterEl && submitterEl.getAttribute && submitterEl.getAttribute('data-ag-formaction')) ||
+                 formEl.getAttribute('data-ag-action') ||
+                 formEl.getAttribute('action') ||
+                 tab.url;
+    if (!action || action === 'javascript:void(0)') action = tab.url;
+    action = resolveRelativeUrl(action, tab.url);
+
+    var method = ((submitterEl && submitterEl.getAttribute && submitterEl.getAttribute('formmethod')) ||
+                  formEl.getAttribute('method') || 'GET').toUpperCase();
+
+    var pairs = [];
+    var els = formEl.elements || formEl.querySelectorAll('input, select, textarea, button');
+    var submitterAdded = false;
+    for (var i = 0; i < els.length; i++) {
+      var field = els[i];
+      if (!field.name || field.disabled) continue;
+      var fTag = (field.tagName || '').toUpperCase();
+      var fType = (field.getAttribute('type') || 'text').toLowerCase();
+      if (fTag === 'BUTTON' || fType === 'submit' || fType === 'button' || fType === 'image' || fType === 'reset') {
+        if (submitterEl && field === submitterEl) {
+          pairs.push(encodeURIComponent(field.name) + '=' + encodeURIComponent(field.value || ''));
+          submitterAdded = true;
+        }
+        continue;
+      }
+      if ((fType === 'checkbox' || fType === 'radio') && !field.checked) continue;
+      pairs.push(encodeURIComponent(field.name) + '=' + encodeURIComponent(field.value || ''));
+    }
+    if (submitterEl && !submitterAdded && submitterEl.name) {
+      pairs.push(encodeURIComponent(submitterEl.name) + '=' + encodeURIComponent(submitterEl.value || ''));
+    }
+    var queryStr = pairs.join('&');
+
+    if (method === 'POST') {
+      loadUrlInCurrentTab(action, true, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: queryStr
+      });
+    } else {
+      var fullUrl = action + (action.indexOf('?') === -1 ? '?' : (action.slice(-1) === '&' ? '' : '&')) + queryStr;
+      loadUrlInCurrentTab(fullUrl, true);
+    }
+  }
+
+  // Multi-Tab Pure Direct-DOM State
+  var tabs = [];
+  var activeTabIndex = 0;
+  var tabIdCounter = 1;
+
+  // Modes: 'CURSOR' | 'HOME' | 'KEYBOARD' | 'PANEL'
+  var mode = 'CURSOR';
+  var homeFocusIdx = 0;
+
+  var cursorX = 640;
+  var cursorY = 380;
+  var lastCursorMove = 0;
+  var cursorStep = 30;
+  var currentHoveredEl = null;
+  var activeWebInputEl = null;
+
+  function createNewTab(initialUrl) {
+    var id = tabIdCounter++;
+    var pane = document.createElement('div');
+    pane.className = 'tab-pane';
+    pane.id = 'tab-pane-' + id;
+    document.getElementById('web-container').appendChild(pane);
+
+    var newTab = {
+      id: id,
+      title: 'Startseite',
+      url: '',
+      history: [],
+      pane: pane
+    };
+    tabs.push(newTab);
+    activeTabIndex = tabs.length - 1;
+    activateTab(activeTabIndex);
+
+    if (initialUrl) {
+      loadUrlInCurrentTab(initialUrl, true);
+    } else {
+      switchToHomeView();
+    }
+  }
+
+  function closeCurrentTab() {
+    if (tabs.length <= 1) {
+      tabs[0].url = '';
+      tabs[0].title = 'Startseite';
+      tabs[0].history = [];
+      tabs[0].pane.innerHTML = '';
+      renderTabBar();
+      switchToHomeView();
+      return;
+    }
+    var removed = tabs.splice(activeTabIndex, 1)[0];
+    if (removed && removed.pane && removed.pane.parentNode) {
+      removed.pane.parentNode.removeChild(removed.pane);
+    }
+    activeTabIndex = Math.max(0, activeTabIndex - 1);
+    activateTab(activeTabIndex);
+  }
+
+  function activateTab(idx) {
+    if (idx < 0 || idx >= tabs.length) return;
+    if (isTvVideoFullscreen) setTvVideoFullscreen(null, false);
+    activeTabIndex = idx;
+    var tab = tabs[activeTabIndex];
+
+    tabs.forEach(function(t, i) {
+      t.pane.classList.toggle('active-pane', i === activeTabIndex);
+    });
+
+    renderTabBar();
+    updateStarUI();
+
+    if (!tab.url) {
+      switchToHomeView();
+    } else {
+      document.getElementById('home-view').style.display = 'none';
+      document.getElementById('web-container').style.display = 'block';
+      document.getElementById('url-text').innerText = tab.url;
+      setMode('CURSOR');
+    }
+  }
+
+  function renderTabBar() {
+    var list = document.getElementById('tabs-list');
+    list.innerHTML = '';
+    tabs.forEach(function(t, idx) {
+      var pill = document.createElement('div');
+      pill.className = 'tab-pill tab-focusable' + (idx === activeTabIndex ? ' active-tab' : '');
+      var titleSpan = document.createElement('span');
+      titleSpan.className = 'tab-title';
+      titleSpan.innerText = (idx + 1) + '. ' + (t.title || 'Startseite');
+      pill.appendChild(titleSpan);
+      pill.onclick = function() { activateTab(idx); };
+      list.appendChild(pill);
+    });
+  }
+
+  function rewriteGoogleUrlForTv(rawUrl) {
+    try {
+      var u = new URL(rawUrl);
+      if (u.hostname.indexOf('net77.cc') !== -1 && u.pathname.indexOf('/login-status') !== -1 && u.search.indexOf('google=yes') !== -1) {
+        return 'https://accounts.google.com/o/oauth2/auth?response_type=code&redirect_uri=https%3A%2F%2Fnet77.cc%2Flogin-status&client_id=722393836524-jvu6s7a7p0j04kr45pukb8pfbh27j39f.apps.googleusercontent.com&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&access_type=offline&approval_prompt=force&hl=de';
+      }
+      if (u.hostname === 'accounts.google.com') {
+        if (u.pathname.indexOf('/o/oauth2/') !== -1) {
+          if (!u.searchParams.get('hl')) u.searchParams.set('hl', 'de');
+          return u.href;
+        }
+        if (u.pathname.indexOf('/ServiceLogin') !== -1 || u.pathname === '/' || u.pathname.indexOf('/signin/rejected') !== -1) {
+          var cont = u.searchParams.get('continue') || 'https://www.google.de/webhp?gbv=1&hl=de';
+          if (cont.indexOf('accounts.google.com/v3/signin') !== -1) cont = 'https://www.google.de/webhp?gbv=1&hl=de';
+          return 'https://accounts.google.com/v3/signin/identifier?continue=' + encodeURIComponent(cont) + '&hl=de&flowName=WebLiteSignIn&flowEntry=ServiceLogin';
+        }
+        if (!u.searchParams.get('flowName')) u.searchParams.set('flowName', 'WebLiteSignIn');
+        if (!u.searchParams.get('hl')) u.searchParams.set('hl', 'de');
+        return u.href;
+      }
+      if ((u.hostname === 'www.google.de' || u.hostname === 'www.google.com' || u.hostname === 'google.de' || u.hostname === 'google.com') && (u.pathname === '/' || u.pathname === '/search' || u.pathname === '/webhp')) {
+        u.searchParams.set('gbv', '1');
+        if (!u.searchParams.get('hl')) u.searchParams.set('hl', 'de');
+        return u.href;
+      }
+    } catch (e) {}
+    return rawUrl;
+  }
+
+  function isIpOrLocalHostInput(str) {
+    return /^(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:\/.*)?$/.test(str) ||
+           /^localhost(?::\d+)?(?:\/.*)?$/i.test(str) ||
+           /^[a-zA-Z0-9.-]+:\d+(?:\/.*)?$/.test(str);
+  }
+
+  function isPrivateOrIpUrl(urlStr) {
+    try {
+      var u = new URL(urlStr);
+      var h = u.hostname;
+      return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(h) || h === 'localhost' || /\.local$/i.test(h);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function normalizeUrl(raw) {
+    raw = (raw || '').trim();
+    if (!raw) return 'https://lite.duckduckgo.com/lite/';
+    // Convert https://<bare-IP> (e.g. https://186.2.175.5 from saved history) to http://<bare-IP> unless explicit :443
+    if (/^https:\/\/(?:\d{1,3}\.){3}\d{1,3}(?!:\d+)(?:\/.*)?$/i.test(raw)) {
+      raw = raw.replace(/^https:\/\//i, 'http://');
+    }
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return rewriteGoogleUrlForTv(raw);
+    if (isIpOrLocalHostInput(raw)) {
+      return 'http://' + raw;
+    }
+    if (raw.indexOf('.') !== -1 && raw.indexOf(' ') === -1) {
+      return rewriteGoogleUrlForTv('https://' + raw);
+    }
+    return 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(raw);
+  }
+
+  function setProgress(pct) {
+    var bar = document.getElementById('progress-bar');
+    bar.style.width = pct + '%';
+    if (pct >= 100) {
+      setTimeout(function() { bar.style.width = '0%'; }, 350);
+    }
+  }
+
+  var KICKER_FEEDS = [
+    { label: '🔥 Top-News', url: 'https://newsfeed.kicker.de/news/aktuell' },
+    { label: '⚽ Bundesliga', url: 'https://newsfeed.kicker.de/news/bundesliga' },
+    { label: '🏆 Champions League', url: 'https://newsfeed.kicker.de/news/champions-league' },
+    { label: '🌍 Fußball International', url: 'https://newsfeed.kicker.de/news/fussball' },
+    { label: '🥈 2. Bundesliga', url: 'https://newsfeed.kicker.de/news/2-bundesliga' }
+  ];
+
+  function loadKickerPortal(feedUrl, tab) {
+    var activeFeed = feedUrl && feedUrl.indexOf('newsfeed.kicker.de') !== -1
+      ? feedUrl
+      : 'https://newsfeed.kicker.de/news/aktuell';
+
+    tab.title = 'kicker Sport-News';
+    renderTabBar();
+    addHistoryEntry('kicker Sport', 'https://www.kicker.de');
+    updateStarUI();
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', activeFeed, true);
+    xhr.timeout = 8000;
+    xhr.onload = function() {
+      setProgress(100);
+      if (xhr.status >= 200 && xhr.status < 400 && xhr.responseText) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(xhr.responseText, 'text/xml');
+        var items = xmlDoc.querySelectorAll('item');
+        var cardsHtml = '';
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          var title = (it.querySelector('title') && it.querySelector('title').textContent) || 'kicker Meldung';
+          var desc = (it.querySelector('description') && it.querySelector('description').textContent) || '';
+          var pub = (it.querySelector('pubDate') && it.querySelector('pubDate').textContent) || '';
+          var cats = it.querySelectorAll('category');
+          var catBadges = '';
+          for (var c = 0; c < Math.min(cats.length, 3); c++) {
+            catBadges += '<span style="background:#cc0000;color:#fff;padding:3px 10px;border-radius:6px;font-size:14px;font-weight:700;">' + cats[c].textContent + '</span> ';
+          }
+          cardsHtml +=
+            '<div style="background:#161b22;border:2px solid #30363d;border-radius:14px;padding:22px 26px;display:flex;flex-direction:column;gap:10px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div>' + catBadges + '</div><span style="color:#8b949e;font-size:15px;">' + pub.replace(/\+0000|GMT/g, '').trim() + '</span></div>' +
+            '<h3 style="color:#f0f6fc;font-size:24px;font-weight:800;line-height:1.3;">' + title + '</h3>' +
+            '<p style="color:#c9d1d9;font-size:19px;line-height:1.5;">' + desc + '</p>' +
+            '</div>';
+        }
+        var navHtml = '';
+        for (var f = 0; f < KICKER_FEEDS.length; f++) {
+          var fd = KICKER_FEEDS[f];
+          var isAct = fd.url === activeFeed;
+          navHtml += '<button class="kicker-cat-btn" data-feed="' + fd.url + '" style="background:' + (isAct ? '#cc0000' : '#21262d') + ';border:2px solid ' + (isAct ? '#ff4444' : '#30363d') + ';color:#fff;padding:12px 20px;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;">' + fd.label + '</button>';
+        }
+        tab.pane.innerHTML =
+          '<div class="ag-page-body" style="background:#0d1117;color:#f0f6fc;min-height:100%;padding:28px 44px;display:flex;flex-direction:column;gap:22px;">' +
+          '<div style="background:linear-gradient(135deg,#b30000 0%,#161b22 100%);border:2px solid #ff4444;border-radius:16px;padding:20px 28px;display:flex;justify-content:space-between;align-items:center;">' +
+          '<div><h1 style="font-size:32px;font-weight:900;color:#fff;letter-spacing:1px;">⚽ kicker LIVE SPORT-PORTAL</h1><p style="font-size:17px;color:#ffdcd7;">Direkter Live-Ticker & Newsfeed (100 % werbefrei für Smart-TV aufbereitet)</p></div>' +
+          '<button id="kicker-refresh-btn" style="background:#21262d;border:2px solid #fff;color:#fff;padding:10px 18px;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;">🔄 Aktualisieren</button>' +
+          '</div>' +
+          '<div style="display:flex;gap:12px;flex-wrap:wrap;">' + navHtml + '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:16px;">' + (cardsHtml || '<p>Keine Meldungen gefunden.</p>') + '</div>' +
+          '</div>';
+        tab.pane.scrollTop = 0;
+        var catBtns = tab.pane.querySelectorAll('.kicker-cat-btn');
+        for (var b = 0; b < catBtns.length; b++) {
+          catBtns[b].onclick = function() {
+            loadKickerPortal(this.getAttribute('data-feed'), tab);
+          };
+        }
+        var refBtn = tab.pane.querySelector('#kicker-refresh-btn');
+        if (refBtn) refBtn.onclick = function() { loadKickerPortal(activeFeed, tab); };
+      } else {
+        renderCloudflareNoticeInDom(tab.pane, 'https://www.kicker.de', false);
+      }
+    };
+    xhr.onerror = function() {
+      setProgress(100);
+      renderCloudflareNoticeInDom(tab.pane, 'https://www.kicker.de', false);
+    };
+    xhr.ontimeout = xhr.onerror;
+    xhr.send(null);
+  }
+
+  function fetchViaLocalService(targetUrl, tab, customFetchOpts, retryCount) {
+    retryCount = retryCount || 0;
+    var svcEndpoint = 'http://127.0.0.1:8123/proxy?url=' + encodeURIComponent(targetUrl);
+    var xhrSvc = new XMLHttpRequest();
+    var method = (customFetchOpts && customFetchOpts.method) ? customFetchOpts.method : 'GET';
+    xhrSvc.open(method, svcEndpoint, true);
+    xhrSvc.timeout = 9000;
+    if (customFetchOpts && customFetchOpts.headers) {
+      Object.keys(customFetchOpts.headers).forEach(function(k) {
+        xhrSvc.setRequestHeader(k, customFetchOpts.headers[k]);
+      });
+    }
+    xhrSvc.onload = function() {
+      setProgress(100);
+      try {
+        var data = JSON.parse(xhrSvc.responseText || '{}');
+        if (data && data.ok && data.html) {
+          var resolved = data.finalUrl || targetUrl;
+          tab.url = resolved;
+          document.getElementById('url-text').innerText = resolved;
+          renderHtmlIntoPane(data.html, resolved, tab.pane, tab);
+          return;
+        }
+      } catch (e) {}
+      fetchViaMirrorFallback(targetUrl, tab);
+    };
+    xhrSvc.onerror = function() {
+      if (retryCount < 6) {
+        startLocalProxyService();
+        setTimeout(function() {
+          fetchViaLocalService(targetUrl, tab, customFetchOpts, retryCount + 1);
+        }, 800);
+        return;
+      }
+      setProgress(100);
+      fetchViaMirrorFallback(targetUrl, tab);
+    };
+    xhrSvc.ontimeout = xhrSvc.onerror;
+    xhrSvc.send((customFetchOpts && customFetchOpts.body) ? customFetchOpts.body : null);
+  }
+
+  function loadUrlInCurrentTab(rawInput, pushHistory, customFetchOpts) {
+    if (isTvVideoFullscreen) setTvVideoFullscreen(null, false);
+    var targetUrl = normalizeUrl(rawInput);
+    var tab = tabs[activeTabIndex];
+    if (!tab) return;
+
+    if (pushHistory !== false && tab.url && tab.url !== targetUrl) {
+      tab.history.push(tab.url);
+    }
+    tab.url = targetUrl;
+    var hostName = '';
+    try {
+      hostName = new URL(targetUrl).hostname.replace(/^www\./, '');
+      tab.title = hostName;
+    } catch (e) {
+      tab.title = targetUrl;
+    }
+
+    document.getElementById('url-text').innerText = targetUrl;
+    document.getElementById('home-view').style.display = 'none';
+    document.getElementById('web-container').style.display = 'block';
+    tabs.forEach(function(t, i) {
+      t.pane.classList.toggle('active-pane', i === activeTabIndex);
+    });
+    renderTabBar();
+    updateStarUI();
+    setMode('CURSOR');
+
+    tab.pane.innerHTML = '<div style="padding:60px;text-align:center;font-size:24px;color:#1f6feb;font-weight:700;">⚡ Lade werbefrei: ' + targetUrl + ' ...</div>';
+    setProgress(30);
+
+    // Kicker.de uses DataDome JS block on www.kicker.de -> render native Kicker Sport Live Portal directly from Kicker's official XML feeds!
+    if (hostName === 'kicker.de' || hostName === 'newsfeed.kicker.de') {
+      loadKickerPortal(targetUrl, tab);
+      return;
+    }
+
+    var method = (customFetchOpts && customFetchOpts.method) ? customFetchOpts.method : 'GET';
+    if (window.tizen && hostName === 'accounts.google.com') {
+      fetchViaLocalService(targetUrl, tab, customFetchOpts, 0);
+      return;
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open(method, targetUrl, true);
+    xhr.timeout = 8000;
+    if (customFetchOpts && customFetchOpts.headers) {
+      Object.keys(customFetchOpts.headers).forEach(function(k) {
+        xhr.setRequestHeader(k, customFetchOpts.headers[k]);
+      });
+    }
+
+    xhr.onload = function() {
+      setProgress(100);
+      var finalResolvedUrl = xhr.responseURL || targetUrl;
+      tab.url = finalResolvedUrl;
+      document.getElementById('url-text').innerText = finalResolvedUrl;
+
+      if (xhr.status === 401 || xhr.status === 403 || xhr.status === 503 || finalResolvedUrl.indexOf('accounts.google.com') !== -1 || (xhr.responseText && xhr.responseText.indexOf('challenges.cloudflare.com') !== -1)) {
+        fetchViaLocalService(rewriteGoogleUrlForTv(finalResolvedUrl), tab, customFetchOpts, 0);
+        return;
+      }
+
+      renderHtmlIntoPane(xhr.responseText || '', finalResolvedUrl, tab.pane, tab);
+    };
+
+    xhr.onerror = function() {
+      setProgress(100);
+      // Automatic HTTP <-> HTTPS fallback for IP addresses and servers before mirror fallback
+      if ((!customFetchOpts || !customFetchOpts._retriedProto) && method === 'GET' && isPrivateOrIpUrl(targetUrl)) {
+        var altUrl = targetUrl.indexOf('http://') === 0
+          ? targetUrl.replace(/^http:\/\//i, 'https://')
+          : targetUrl.replace(/^https:\/\//i, 'http://');
+        loadUrlInCurrentTab(altUrl, false, { _retriedProto: true });
+        return;
+      }
+      fetchViaLocalService(targetUrl, tab, customFetchOpts, 0);
+    };
+
+    xhr.ontimeout = xhr.onerror;
+    xhr.send((customFetchOpts && customFetchOpts.body) ? customFetchOpts.body : null);
+  }
+
+  function fetchViaMirrorFallback(targetUrl, tab) {
+    addHistoryEntry(tab.title || targetUrl, targetUrl);
+    updateStarUI();
+    if (isPrivateOrIpUrl(targetUrl)) {
+      renderCloudflareNoticeInDom(tab.pane, targetUrl, true);
+      return;
+    }
+    var proxyEndpoint = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', proxyEndpoint, true);
+    xhr2.timeout = 10000;
+    xhr2.onload = function() {
+      if (xhr2.status >= 200 && xhr2.status < 300 && xhr2.responseText) {
+        renderHtmlIntoPane(xhr2.responseText, targetUrl, tab.pane, tab);
+      } else {
+        renderCloudflareNoticeInDom(tab.pane, targetUrl, false);
+      }
+    };
+    xhr2.onerror = function() {
+      renderCloudflareNoticeInDom(tab.pane, targetUrl, false);
+    };
+    xhr2.send(null);
+  }
+
+  function renderCloudflareNoticeInDom(pane, targetUrl, isLocalIp) {
+    var altProtoUrl = targetUrl.indexOf('http://') === 0
+      ? targetUrl.replace(/^http:\/\//i, 'https://')
+      : targetUrl.replace(/^https:\/\//i, 'http://');
+    var badgeText = isLocalIp
+      ? ('🌐 Verbindung zu IP/Server nicht möglich: ' + targetUrl)
+      : ('🔒 Cloudflare Turnstile Bot-Sperre auf ' + targetUrl);
+    var titleText = isLocalIp
+      ? 'IP-Webseite konnte nicht erreicht werden (HTTP / HTTPS / Zertifikat)'
+      : 'Diese Seite blockiert automatische Abrufe (HTTP 403 Challenge)';
+    var descText = isLocalIp
+      ? 'Prüfe, ob die IP-Adresse und der Port (z.B. http://192.168.1.x:8080) im Heimnetzwerk erreichbar sind. Du kannst unten direkt zwischen HTTP und HTTPS wechseln:'
+      : 'Die Maus und alle Funktionen deiner App bleiben hier voll aktiv! Du kannst entweder erneut versuchen zu laden oder zur Startseite zurückkehren.';
+
+    pane.innerHTML =
+      '<div style="padding:50px 70px;background:#0d1117;color:#f0f6fc;min-height:100%;display:flex;flex-direction:column;gap:20px;align-items:flex-start;">' +
+      '<div style="background:rgba(248,81,73,0.15);border:1px solid #f85149;color:#ff7b72;padding:8px 16px;border-radius:999px;font-weight:700;font-size:18px;">' + badgeText + '</div>' +
+      '<h2 style="font-size:30px;color:#fff;">' + titleText + '</h2>' +
+      '<p style="font-size:20px;color:#8b949e;max-width:900px;line-height:1.5;">' + descText + '</p>' +
+      '<div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">' +
+      '<button id="retry-dom-btn" style="background:#1f6feb;border:2px solid #58a6ff;color:#fff;padding:14px 26px;border-radius:12px;font-size:20px;font-weight:700;cursor:pointer;">🔄 Erneut versuchen</button>' +
+      '<button id="alt-proto-btn" style="background:#238636;border:2px solid #3fb950;color:#fff;padding:14px 26px;border-radius:12px;font-size:20px;font-weight:700;cursor:pointer;">🔀 Mit ' + (targetUrl.indexOf('http://') === 0 ? 'HTTPS' : 'HTTP') + ' öffnen (' + altProtoUrl + ')</button>' +
+      '<button id="back-home-btn" style="background:#21262d;border:2px solid #30363d;color:#e6edf3;padding:14px 26px;border-radius:12px;font-size:20px;font-weight:700;cursor:pointer;">🏠 Zurück zur Startseite</button>' +
+      '</div></div>';
+    var rBtn = pane.querySelector('#retry-dom-btn');
+    if (rBtn) rBtn.onclick = function() { loadUrlInCurrentTab(targetUrl, false, { _retriedProto: true }); };
+    var aBtn = pane.querySelector('#alt-proto-btn');
+    if (aBtn) aBtn.onclick = function() { loadUrlInCurrentTab(altProtoUrl, false, { _retriedProto: true }); };
+    var hBtn = pane.querySelector('#back-home-btn');
+    if (hBtn) hBtn.onclick = function() { switchToHomeView(); };
+  }
+
+  function goBackInTab() {
+    var tab = tabs[activeTabIndex];
+    if (tab && tab.history.length > 0) {
+      var prevUrl = tab.history.pop();
+      loadUrlInCurrentTab(prevUrl, false);
+    } else {
+      switchToHomeView();
+    }
+  }
+
+  function reloadCurrentTab() {
+    var tab = tabs[activeTabIndex];
+    if (tab && tab.url) {
+      loadUrlInCurrentTab(tab.url, false);
+    }
+  }
+
+  function switchToHomeView() {
+    if (isTvVideoFullscreen) setTvVideoFullscreen(null, false);
+    document.body.classList.remove('browser-fullscreen');
+    document.body.classList.remove('peek-bars');
+    document.getElementById('web-container').style.display = 'none';
+    document.getElementById('home-view').style.display = 'flex';
+    document.getElementById('tabbar').classList.remove('hidden');
+    document.getElementById('url-text').innerText = '🔍 Webadresse oder Suchbegriff eingeben...';
+    renderHomeDashboard();
+    setMode(freeCursorEverywhere ? 'CURSOR' : 'HOME');
+  }
+
+  function getActivePane() {
+    var tab = tabs[activeTabIndex];
+    return tab ? tab.pane : null;
+  }
+
+  function scrollPage(dy) {
+    if (isTvVideoFullscreen) return;
+    if (document.getElementById('web-container').style.display === 'block') {
+      var pane = getActivePane();
+      if (pane) pane.scrollTop += dy;
+    } else {
+      var home = document.getElementById('home-view');
+      if (home) home.scrollTop += dy;
+    }
+  }
+
+  function getHeaderOffset() {
+    if (isTvVideoFullscreen) return 0;
+    if (document.body.classList.contains('browser-fullscreen') && !document.body.classList.contains('peek-bars')) {
+      return 0;
+    }
+    return document.getElementById('tabbar').classList.contains('hidden') ? 0 : 120;
+  }
+
+  // Unified Precision Mouse Cursor (Works on Top Bar, Tabs, Home Cards AND Web Pages!)
+  function moveCursor(dx, dy) {
+    var now = Date.now();
+    if (now - lastCursorMove < 150) {
+      cursorStep = Math.min(72, cursorStep + 7);
+    } else {
+      cursorStep = 28;
+    }
+    lastCursorMove = now;
+
+    cursorX = Math.max(12, Math.min(1908, cursorX + dx * cursorStep));
+    cursorY = Math.max(12, Math.min(1068, cursorY + dy * cursorStep));
+
+    var c = document.getElementById('cursor');
+    c.style.display = 'block';
+    c.style.left = cursorX + 'px';
+    c.style.top = cursorY + 'px';
+
+    if (isTvVideoFullscreen) {
+      wakeVideoFsHud();
+    } else if (document.body.classList.contains('browser-fullscreen')) {
+      // Chrome-style top edge hover: moving cursor to top edge reveals tabbar & navbar temporarily
+      if (cursorY <= 18) {
+        document.body.classList.add('peek-bars');
+      } else if (cursorY > 140) {
+        document.body.classList.remove('peek-bars');
+      }
+    }
+
+    var headerOffset = getHeaderOffset();
+
+    // Auto-scroll when cursor approaches bottom or top edge inside content area
+    if (!isTvVideoFullscreen) {
+      if (dy > 0 && cursorY > 960) {
+        scrollPage(260);
+      } else if (dy < 0 && cursorY > headerOffset && cursorY < headerOffset + 65) {
+        scrollPage(-260);
+      }
+    }
+
+    if (currentHoveredEl) {
+      try {
+        currentHoveredEl.classList.remove('ag-tv-hover');
+        currentHoveredEl.classList.remove('focused');
+      } catch(e) {}
+      currentHoveredEl = null;
+    }
+
+    var el = document.elementFromPoint(cursorX, cursorY);
+    var labelEl = document.getElementById('cursor-label');
+
+    if (el) {
+      var actionable = findActionableTarget(el);
+      if (actionable && actionable !== document.body && actionable.id !== 'main-area' && actionable.id !== 'web-container' && actionable.id !== 'home-view' && (!actionable.classList || (!actionable.classList.contains('ag-page-body') && !actionable.classList.contains('tab-pane')))) {
+        try {
+          if (actionable.classList && (actionable.classList.contains('site-card') || actionable.classList.contains('nav-btn') || actionable.id === 'url-bar' || actionable.classList.contains('tab-pill') || actionable.classList.contains('tab-action'))) {
+            actionable.classList.add('focused');
+          } else if (actionable.classList) {
+            actionable.classList.add('ag-tv-hover');
+          }
+        } catch (e) {}
+        currentHoveredEl = actionable;
+        c.classList.add('hovering');
+
+        var hintText = '';
+        var actTag = (actionable.tagName || '').toUpperCase();
+        var actHref = actionable.getAttribute && (actionable.getAttribute('data-ag-href') || actionable.getAttribute('href'));
+        if (actTag === 'INPUT' || actTag === 'TEXTAREA' || actionable.id === 'url-bar') {
+          var tType = ((actionable.getAttribute && actionable.getAttribute('type')) || 'text').toLowerCase();
+          if (tType === 'submit' || tType === 'button') {
+            hintText = '🚀 OK = Absenden';
+          } else {
+            hintText = '⌨️ OK = Tastatur öffnen';
+          }
+        } else if (actHref && actHref !== 'javascript:void(0)') {
+          hintText = '🔗 ' + (actionable.innerText || actionable.textContent || actHref || 'Link öffnen').trim().substring(0, 42);
+        } else {
+          hintText = '👆 OK = Auswählen';
+        }
+        labelEl.innerText = hintText;
+        labelEl.style.display = 'block';
+        return;
+      }
+    }
+    c.classList.remove('hovering');
+    labelEl.style.display = 'none';
+  }
+
+  function safeTriggerClick(node) {
+    if (!node) return;
+    if (typeof node.click === 'function') {
+      node.click();
+      return;
+    }
+    try {
+      var evt = document.createEvent('MouseEvents');
+      evt.initMouseEvent('click', true, true, window, 1, cursorX, cursorY, cursorX, cursorY, false, false, false, false, 0, null);
+      node.dispatchEvent(evt);
+    } catch (e) {}
+  }
+
+  function clickAtCursor() {
+    var el = document.elementFromPoint(cursorX, cursorY);
+    if (!el) return;
+
+    if (el.id === 'ag-native-video' || (el.tagName && el.tagName.toUpperCase() === 'VIDEO')) {
+      if (isTvVideoFullscreen) {
+        handleVideoPlayerCommand('toggle');
+        return;
+      }
+      var vRect = el.getBoundingClientRect();
+      if (cursorX >= vRect.right - 120 && cursorY >= vRect.bottom - 85) {
+        setTvVideoFullscreen(el, true);
+        return;
+      }
+      if (cursorY >= vRect.bottom - 65 && cursorX >= vRect.left + 80 && cursorX < vRect.right - 120) {
+        if (el.duration && isFinite(el.duration)) {
+          var seekRatio = Math.max(0, Math.min(1, (cursorX - (vRect.left + 80)) / Math.max(1, vRect.width - 200)));
+          el.currentTime = seekRatio * el.duration;
+        }
+        return;
+      }
+      handleVideoPlayerCommand('toggle');
+      return;
+    }
+
+    // Direct handler for Video Player Commands & Stream Provider Buttons (VOE Deutsch/Englisch etc.)
+    var walkNode = el;
+    while (walkNode && walkNode !== document.body) {
+      if (walkNode.getAttribute) {
+        var vCmd = walkNode.getAttribute('data-vid-cmd');
+        if (vCmd) {
+          handleVideoPlayerCommand(vCmd, getActivePane());
+          return;
+        }
+        var pUrl = walkNode.getAttribute('data-ag-play-url') || walkNode.getAttribute('data-play-url');
+        if (pUrl) {
+          var activeTab = tabs[activeTabIndex];
+          var baseForPlay = (activeTab && activeTab.url) ? activeTab.url : 'http://186.2.175.5/';
+          var resolvedPlayUrl = resolveRelativeUrl(pUrl, baseForPlay);
+          var pName = walkNode.getAttribute('data-provider-name') || 'Stream';
+          var pLang = walkNode.getAttribute('data-language-label') || '';
+          showToast('🎬 Lade ' + pName + (pLang ? (' (' + pLang + ')') : '') + '...');
+          var actPane = getActivePane();
+          if (actPane) actPane.scrollTop = 0;
+          playExtractedStreamInPane(resolvedPlayUrl, baseForPlay, actPane, 0, false);
+          return;
+        }
+      }
+      walkNode = getParentEl(walkNode);
+    }
+
+    var target = findActionableTarget(el) || el;
+    var tab = tabs[activeTabIndex];
+
+    if (target.id === 'url-bar') {
+      openKeyboard('URL');
+      return;
+    }
+
+    var tTag = (target.tagName || '').toUpperCase();
+
+    // 1. Check if target or any parent is a link / has data-ag-href
+    var linkNode = findLinkTarget(el) || (target.getAttribute && target.getAttribute('data-ag-href') ? target : null);
+    if (linkNode && tTag !== 'INPUT' && tTag !== 'TEXTAREA' && tTag !== 'SELECT') {
+      var rawHref = linkNode.getAttribute('data-ag-href') || linkNode.getAttribute('href');
+      if (rawHref && !rawHref.startsWith('#') && !rawHref.startsWith('javascript:')) {
+        loadUrlInCurrentTab(rawHref, true);
+        return;
+      }
+    }
+
+    // 2. Handle Inputs & Textareas
+    if (tTag === 'INPUT' || tTag === 'TEXTAREA') {
+      var inputType = ((target.getAttribute && target.getAttribute('type')) || 'text').toLowerCase();
+      if (inputType === 'submit' || inputType === 'button' || inputType === 'image') {
+        var pForm = findClosestTag(target, 'FORM') || target.form;
+        if (pForm) {
+          submitFormViaFetch(pForm, tab, target);
+          return;
+        }
+        if (handleDynamicGoogleAuthClick(target, tab)) return;
+        safeTriggerClick(target);
+        return;
+      }
+      if (inputType === 'checkbox' || inputType === 'radio') {
+        target.checked = !target.checked;
+        return;
+      }
+      activeWebInputEl = target;
+      var labelHint = (target.getAttribute && (target.getAttribute('placeholder') || target.getAttribute('aria-label') || target.getAttribute('title'))) || 'Suchbegriff / Text eingeben...';
+      openKeyboard('WEB_INPUT', target.value || '', labelHint);
+      return;
+    }
+
+    // 3. Handle Buttons & Role="button"
+    var btnForm = findClosestTag(target, 'FORM') || target.form;
+    if (btnForm && (tTag === 'BUTTON' || (target.getAttribute && target.getAttribute('role') === 'button'))) {
+      submitFormViaFetch(btnForm, tab, target);
+      return;
+    }
+
+    // 4. Handle Dynamic Google Auth buttons (e.g., JS-only Google sign-in buttons)
+    if (findClosestTag(target, 'DIV') && handleDynamicGoogleAuthClick(target, tab)) {
+      return;
+    }
+
+    safeTriggerClick(target);
+  }
+
+  // On-Screen TV Keyboard
+  var kbPurpose = 'URL';
+  var kbText = '';
+  var kbR = 1;
+  var kbC = 0;
+  var kbShift = false;
+
+  var KB_ROWS = [
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '@', '.', '-', '_', '/'],
+    ['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü', '@gmail.com', '⌫'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä', '.de', '.com'],
+    ['⬆️ Aa', 'y', 'x', 'c', 'v', 'b', 'n', 'm', 'ß', '.cc', '.net', '.org'],
+    ['https://', 'www.', 'LEERTASTE', 'LÖSCHEN', 'ABBRECHEN', 'OK ✔️', 'LOS 🚀']
+  ];
+
+  function openKeyboard(purpose, initialVal, customTitle) {
+    kbPurpose = purpose || 'URL';
+    kbShift = false;
+    if (typeof initialVal === 'string') {
+      kbText = initialVal;
+    } else {
+      kbText = (tabs[activeTabIndex] && tabs[activeTabIndex].url) ? tabs[activeTabIndex].url : '';
+    }
+    document.getElementById('kb-title').innerText = '⌨️ ' + (customTitle || 'Webadresse oder Suchbegriff eingeben');
+    kbR = 1;
+    kbC = 0;
+    mode = 'KEYBOARD';
+    document.getElementById('keyboard-modal').style.display = 'flex';
+    document.getElementById('cursor').style.display = 'none';
+    renderKeyboard();
+  }
+
+  function closeKeyboard() {
+    document.getElementById('keyboard-modal').style.display = 'none';
+    setMode('CURSOR');
+  }
+
+  function formatKbLabel(label) {
+    if (kbShift && label.length === 1 && label >= 'a' && label <= 'z') {
+      return label.toUpperCase();
+    }
+    return label;
+  }
+
+  function renderKeyboard() {
+    var grid = document.getElementById('kb-grid');
+    grid.innerHTML = '';
+    KB_ROWS.forEach(function(row, rIdx) {
+      var rDiv = document.createElement('div');
+      rDiv.className = 'kb-row';
+      row.forEach(function(rawLabel, cIdx) {
+        var label = formatKbLabel(rawLabel);
+        var k = document.createElement('div');
+        k.className = 'kb-key';
+        if (rawLabel === 'LEERTASTE') k.className += ' wide-3';
+        else if (rawLabel === 'LOS 🚀' || rawLabel === 'OK ✔️') k.className += ' wide-2 go';
+        else if (rawLabel === 'ABBRECHEN' || rawLabel === 'LÖSCHEN') k.className += ' wide-2 cancel';
+        else if (rawLabel === '⌫' || rawLabel === 'https://' || rawLabel === '@gmail.com' || rawLabel === '⬆️ Aa') k.className += ' wide-2';
+
+        if (rIdx === kbR && cIdx === kbC) k.className += ' focused';
+        k.innerText = label;
+        k.onclick = function() {
+          kbR = rIdx; kbC = cIdx;
+          pressKeyboardKey(rawLabel);
+        };
+        rDiv.appendChild(k);
+      });
+      grid.appendChild(rDiv);
+    });
+    document.getElementById('kb-val').innerText = kbText;
+  }
+
+  function pressKeyboardKey(key) {
+    if (key === '⌫') {
+      kbText = kbText.slice(0, -1);
+    } else if (key === '⬆️ Aa') {
+      kbShift = !kbShift;
+    } else if (key === 'LÖSCHEN') {
+      kbText = '';
+    } else if (key === 'LEERTASTE') {
+      kbText += ' ';
+    } else if (key === 'ABBRECHEN') {
+      closeKeyboard();
+      return;
+    } else if (key === 'OK ✔️') {
+      var valOnly = kbText.trim();
+      closeKeyboard();
+      if (kbPurpose === 'WEB_INPUT' && activeWebInputEl) {
+        activeWebInputEl.value = valOnly;
+        try { activeWebInputEl.setAttribute('value', valOnly); } catch (e) {}
+        showToast('✔️ Text ins Feld eingetragen');
+      } else if (kbPurpose === 'URL' && valOnly) {
+        loadUrlInCurrentTab(valOnly, true);
+      }
+      return;
+    } else if (key === 'LOS 🚀') {
+      var val = kbText.trim();
+      closeKeyboard();
+      if (kbPurpose === 'URL' && val) {
+        loadUrlInCurrentTab(val, true);
+      } else if (kbPurpose === 'ADD_FAV' && val) {
+        var norm = normalizeUrl(val);
+        favorites.unshift({ title: val, url: norm, icon: '⭐' });
+        saveFavorites();
+        renderHomeDashboard();
+        showToast('⭐ Favorit gespeichert: ' + val);
+      } else if (kbPurpose === 'WEB_INPUT' && activeWebInputEl) {
+        activeWebInputEl.value = val;
+        try { activeWebInputEl.setAttribute('value', val); } catch (e) {}
+        var pForm = findClosestTag(activeWebInputEl, 'FORM') || activeWebInputEl.form;
+        if (pForm) {
+          var subBtn = pForm.querySelector('button[type="submit"], button[name="action"], input[type="submit"], button');
+          submitFormViaFetch(pForm, tabs[activeTabIndex], subBtn);
+        }
+      }
+      return;
+    } else {
+      kbText += formatKbLabel(key);
+    }
+    renderKeyboard();
+  }
+
+  function setMode(newMode) {
+    mode = newMode;
+    document.querySelectorAll('.focused').forEach(function(el) { el.classList.remove('focused'); });
+
+    var cursor = document.getElementById('cursor');
+    if (mode === 'CURSOR') {
+      cursor.style.display = 'block';
+      moveCursor(0, 0);
+    } else {
+      cursor.style.display = 'none';
+    }
+
+    if (mode === 'HOME') {
+      var hItems = document.querySelectorAll('.home-item');
+      if (homeFocusIdx >= hItems.length) homeFocusIdx = Math.max(0, hItems.length - 1);
+      if (hItems[homeFocusIdx]) hItems[homeFocusIdx].classList.add('focused');
+    } else if (mode === 'PANEL') {
+      var pItems = document.querySelectorAll('.panel-focusable');
+      if (panelFocusIdx >= pItems.length) panelFocusIdx = Math.max(0, pItems.length - 1);
+      if (pItems[panelFocusIdx]) {
+        pItems[panelFocusIdx].classList.add('focused');
+        if (pItems[panelFocusIdx].scrollIntoView) pItems[panelFocusIdx].scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    clearTimeout(window.__tTimer);
+    window.__tTimer = setTimeout(function() { t.classList.remove('show'); }, 2400);
+  }
+
+  function onNativeFullscreenChange() {
+    var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fsEl && (fsEl.id === 'ag-native-video' || (fsEl.tagName && fsEl.tagName.toUpperCase() === 'VIDEO'))) {
+      try {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } catch (e) {}
+      setTvVideoFullscreen(fsEl, true);
+    }
+  }
+  if (document.addEventListener) {
+    document.addEventListener('fullscreenchange', onNativeFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onNativeFullscreenChange);
+  }
+
+  window.addEventListener('keydown', function(e) {
+    var code = e.keyCode;
+
+    if (code === 403) { // Red: Toggle Fullscreen (Video Fullscreen or Chrome-Style Browser Fullscreen)
+      toggleAnyFullscreen();
+      return;
+    }
+    if (code === 415 || code === 19 || code === 10252) { // Media Play / Pause
+      handleVideoPlayerCommand('toggle');
+      return;
+    }
+    if (code === 412) { // Media Rewind
+      handleVideoPlayerCommand('rew');
+      return;
+    }
+    if (code === 417) { // Media FastForward
+      handleVideoPlayerCommand('ff');
+      return;
+    }
+    if (code === 413 && isTvVideoFullscreen) { // Media Stop
+      setTvVideoFullscreen(null, false);
+      return;
+    }
+    if (code === 404) { // Green: New Tab
+      createNewTab();
+      return;
+    }
+    if (code === 405) { // Yellow: Open Keyboard
+      openKeyboard('URL', '');
+      return;
+    }
+    if (code === 406) { // Blue: Open Favorites & History Panel
+      openPanel('FAVORITES');
+      return;
+    }
+    if (code === 427) { // CH Up
+      scrollPage(-550);
+      return;
+    }
+    if (code === 428) { // CH Down
+      scrollPage(550);
+      return;
+    }
+
+    // PANEL MODE
+    if (mode === 'PANEL') {
+      e.preventDefault();
+      var pItems = document.querySelectorAll('.panel-focusable');
+      if (code === 39 || code === 40) {
+        panelFocusIdx = Math.min(pItems.length - 1, panelFocusIdx + 1);
+        setMode('PANEL');
+      } else if (code === 37 || code === 38) {
+        panelFocusIdx = Math.max(0, panelFocusIdx - 1);
+        setMode('PANEL');
+      } else if (code === 13) {
+        if (pItems[panelFocusIdx]) pItems[panelFocusIdx].click();
+      } else if (code === 10009 || code === 27) {
+        closePanel();
+      }
+      return;
+    }
+
+    // KEYBOARD MODE
+    if (mode === 'KEYBOARD') {
+      e.preventDefault();
+      var rLen = KB_ROWS[kbR].length;
+      if (code === 39) { kbC = (kbC + 1) % rLen; renderKeyboard(); }
+      else if (code === 37) { kbC = (kbC - 1 + rLen) % rLen; renderKeyboard(); }
+      else if (code === 40) { kbR = (kbR + 1) % KB_ROWS.length; kbC = Math.min(kbC, KB_ROWS[kbR].length - 1); renderKeyboard(); }
+      else if (code === 38) { kbR = (kbR - 1 + KB_ROWS.length) % KB_ROWS.length; kbC = Math.min(kbC, KB_ROWS[kbR].length - 1); renderKeyboard(); }
+      else if (code === 13) { pressKeyboardKey(KB_ROWS[kbR][kbC]); }
+      else if (code === 10009 || code === 27) { closeKeyboard(); }
+      return;
+    }
+
+    // UNIFIED CURSOR MODE (Works everywhere: Webpages, Top Navbar, Tabs, and Home Screen!)
+    if (mode === 'CURSOR') {
+      e.preventDefault();
+      if (isTvVideoFullscreen) {
+        var fsVid = document.getElementById('ag-native-video');
+        if (!fsVid) {
+          setTvVideoFullscreen(null, false);
+        } else {
+          if (code === 10009 || code === 27) {
+            setTvVideoFullscreen(fsVid, false);
+            return;
+          }
+          var hudEl = document.getElementById('video-fs-hud');
+          var hoveringHudControl = fsHudVisible && hudEl && currentHoveredEl && hudEl.contains(currentHoveredEl);
+          if (code === 13) {
+            if (hoveringHudControl) {
+              clickAtCursor();
+            } else {
+              handleVideoPlayerCommand('toggle');
+            }
+            return;
+          }
+          if (!fsHudVisible) {
+            if (code === 37) { handleVideoPlayerCommand('rew'); return; }
+            if (code === 39) { handleVideoPlayerCommand('ff'); return; }
+            if (code === 38 || code === 40) { wakeVideoFsHud(); return; }
+          }
+        }
+      }
+      if (code === 37) moveCursor(-1, 0);
+      else if (code === 39) moveCursor(1, 0);
+      else if (code === 38) moveCursor(0, -1);
+      else if (code === 40) moveCursor(0, 1);
+      else if (code === 13) clickAtCursor();
+      else if (code === 10009 || code === 27) {
+        if (document.body.classList.contains('browser-fullscreen')) {
+          toggleBrowserFullscreen(false);
+        } else if (document.getElementById('web-container').style.display === 'block') {
+          goBackInTab();
+        } else {
+          try { tizen.application.getCurrentApplication().exit(); } catch(err) {}
+        }
+      }
+      return;
+    }
+
+    // HOME D-PAD MODE (If user toggled Free Mouse off)
+    if (mode === 'HOME') {
+      e.preventDefault();
+      var hItems = document.querySelectorAll('.home-item');
+      if (code === 39) { homeFocusIdx = Math.min(hItems.length - 1, homeFocusIdx + 1); setMode('HOME'); }
+      else if (code === 37) { homeFocusIdx = Math.max(0, homeFocusIdx - 1); setMode('HOME'); }
+      else if (code === 40) { if (homeFocusIdx + 4 < hItems.length) { homeFocusIdx += 4; setMode('HOME'); } }
+      else if (code === 38) {
+        if (homeFocusIdx >= 4) { homeFocusIdx -= 4; setMode('HOME'); }
+        else { setMode('CURSOR'); }
+      }
+      else if (code === 13) { if (hItems[homeFocusIdx]) hItems[homeFocusIdx].click(); }
+      else if (code === 10009 || code === 27) {
+        try { tizen.application.getCurrentApplication().exit(); } catch(err) {}
+      }
+    }
+  });
+
+  window.onload = function() {
+    startLocalProxyService();
+    loadStorage();
+    createNewTab();
+  };
+</script>
+</body>
+</html>
