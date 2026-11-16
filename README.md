@@ -1,61 +1,143 @@
-# 🛡️ AdFree Browser Pro (v1.1.5) – Samsung Tizen Smart TV Browser
+<div align="center">
 
-Ein schneller, 100 % werbefreier Webbrowser speziell für **Samsung Smart TVs (Tizen OS)** mit freier TV-Maussteuerung über das Steuerkreuz der Fernbedienung, Multi-Tab-Unterstützung, Favoriten, Verlauf, integriertem Adblocker und direktem HLS/MP4-Video-Extractor im Chrome-Vollbildmodus.
+# 🛡️ AdFree Browser Pro for Samsung Smart TV (Tizen OS)
 
----
+**The Fast, 100% Ad-Free Web Browser & Universal Video Stream Player Built Specifically for Samsung Smart TVs (Tizen 4.0 – 9.0+)**
 
-## ✨ Features
+[![Version](https://img.shields.io/badge/release-v1.1.5-blue?style=for-the-badge)](https://github.com/yummi-gb/AdFree-Browser-Pro/releases)
+[![Platform](https://img.shields.io/badge/platform-Samsung%20Tizen%20TV-1f6feb?style=for-the-badge&logo=samsung)](https://github.com/yummi-gb/AdFree-Browser-Pro)
+[![AdBlocker](https://img.shields.io/badge/AdBlock-100%25%20Built--In-238636?style=for-the-badge)](https://github.com/yummi-gb/AdFree-Browser-Pro)
+[![Video Engine](https://img.shields.io/badge/Video-Universal%20HLS%20%2F%20MP4-8957e5?style=for-the-badge)](https://github.com/yummi-gb/AdFree-Browser-Pro)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen?style=for-the-badge)](LICENSE)
 
-- **🛡️ 100 % Werbefrei (AdBlock Engine):** Blockiert Werbebanner, Popups, Tracker und Cookie-Banner direkt auf DOM- und Netzwerk-Ebene.
-- **🖱️ Präzise TV-Maussteuerung:** Freier Mauszeiger auf allen Webseiten, Tabs und Menüs – gesteuert direkt über das Steuerkreuz der Samsung-Fernbedienung (inkl. automatischem Rand-Scrollen).
-- **🎬 Integrierter Direkt-Stream & HLS Video-Player:**
-  - Automatische Entschlüsselung von eingebetteten Video-Streams (u. a. VOE Deutsch/Englisch inkl. automatischer ALTCHA-Gate-Auflösung).
-  - Lokale `hls.min.js`-Integration für flüssige HD-Wiedergabe direkt im nativen HTML5-Player ohne Werbe-Overlays.
-- **⛶ Echter Vollbildmodus (wie Google Chrome):**
-  - **Video-Vollbild:** 100 % Rand-zu-Rand (1920×1080) ohne sichtbare Browser- oder Webseiten-Leisten; die Steuerleiste und der Mauszeiger blenden sich nach 2,5 Sekunden Inaktivität automatisch komplett aus.
-  - **Browser-Vollbild:** Blendet Tab- und Navigationsleiste komplett aus; bewegt man den Mauszeiger an den oberen Bildschirmrand, klappen die Leisten wie bei Chrome automatisch wieder ein.
-- **📑 Multi-Tab, Favoriten ⭐ & Verlauf 🕒:** Beliebig viele Tabs öffnen, eigene Favoriten speichern und den Verlauf verwalten.
-- **📰 Kicker Live-Sportportal & Google-Login-Unterstützung:** Integrierter lokaler Tizen-Hintergrunddienst (`service.js`) für Header-/Cookie-Normalisierung und direkte Sport-Newsfeeds.
+[**⬇️ Download Latest `.wgt` Package (Releases)**](https://github.com/yummi-gb/AdFree-Browser-Pro/releases) • [**✨ Features**](#-key-features) • [**🚀 Easy Installation**](#-installation-guide-3-easy-methods) • [**🎮 Remote Controls**](#-tv-remote-control-shortcuts) • [**🏗️ Architecture**](#️-system-architecture)
+
+</div>
 
 ---
 
-## 🎮 Fernbedienungs-Steuerung
+## 🌟 Why AdFree Browser Pro?
 
-| Taste | Funktion |
-| :--- | :--- |
-| **Steuerkreuz (▲ ▼ ◀ ▶)** | Mauszeiger bewegen / im Vollbild spulen (◀ -15s / ▶ +15s) |
-| **OK (Auswahl)** | Element unter dem Mauszeiger anklicken / im Video-Vollbild Play & Pause |
-| **Zurück (Return)** | Vollbild beenden / eine Seite zurück |
-| **CH ⬆ / CH ⬇** | Webseite schnell nach oben / unten scrollen |
-| **🔴 Rote Taste** | Vollbild umschalten (Video-Vollbild bzw. Chrome-Browser-Vollbild) |
-| **🟢 Grüne Taste** | Neuen Tab öffnen |
-| **🟡 Gelbe Taste** | Bildschirm-Tastatur / URL-Eingabe öffnen |
-| **🔵 Blaue Taste** | Favoriten & Verlauf öffnen |
+The stock browser on Samsung Smart TVs is slow, cluttered with pop-ups, breaks on video streaming portals, and consumes hundreds of megabytes of RAM in the background.
+
+**AdFree Browser Pro (`v1.1.5`)** is a lightweight, homebrew Tizen TV web browser and universal media streamer engineered from the ground up for **Samsung QLED, Neo QLED, OLED (S90C / S90D / S95D), Frame, and Crystal UHD TVs**.
+
+### ✨ Key Features
+
+- 🚫 **Zero Pop-Ups & Built-In AdBlocker:** Strips ad scripts, pop-unders, overlay hijacks, and tracking beacons *before* they ever render on your TV.
+- 🎬 **Universal Video Stream Extractor (Play Anything):**
+  - Automatically detects and extracts direct **HLS (`.m3u8`)** and **MP4 (`.mp4`)** streams from embedded video players and streaming hosts (**VOE, Vidmoly, Filemoon, Streamtape, Vidoza, Supervideo, Speedfiles, Luluvdo, Doodstream, HTML5 Video, JWPlayer, PlayerJS**, and packed JS embeds).
+  - **Language-Aware Multi-Hoster Auto-Fallback:** If a clicked stream mirror is offline or blocked, the player automatically switches to the next working mirror in your chosen language (`Deutsch` / `Englisch`) without interruption.
+  - **Built-In ALTCHA / Redirect Gate Solver & CORS Stream Proxy:** Automatically resolves proof-of-work redirect gates and proxies `Referer`-locked HLS/MP4 streams locally on the TV.
+- ⛶ **True Chrome-Style Fullscreen (Zero Visible Bars):**
+  - Press the **Red Button** on your remote (or click `⛶ Vollbild`) to enter 100% edge-to-edge fullscreen.
+  - Both the top browser bars and the video timeline HUD + cursor automatically fade out after **2.5 seconds** of inactivity. Move the cursor to the top edge (`Y < 28px`) at any time to peek at your tabs and address bar.
+- 🖱️ **Precision Remote Control Virtual Mouse & Smart Website Search:**
+  - Smooth D-Pad virtual cursor that never gets trapped inside iframes.
+  - Clicking **any search icon, search bar, or input field** on any website (even single-page apps and modal-based search bars without `<form>` tags) opens a big, TV-friendly On-Screen Keyboard and navigates directly to the search results upon pressing `OK ✔️` or `LOS 🚀`.
+- ⚡ **Ultra-Low RAM Footprint & Auto-Suspend:**
+  - Engineered to protect your TV's memory: automatically pauses media decoding and releases background resources the moment you press the Samsung *Home* button (`background-support="disable"`).
 
 ---
 
-## 📦 Projektstruktur
+## 📊 Comparison: AdFree Browser Pro vs. Stock Samsung Internet
 
-- [`config.xml`](./config.xml) – Tizen Web Application & Background Service Manifest (`AdFreeBrws.AdFreeBrowser` + `AdFreeBrws.ProxyService`)
-- [`index.html`](./index.html) – Hauptanwendung (UI, AdBlocker, Direct-DOM-Renderer, TV-Maussteuerung, Vollbild-Player)
-- [`service.js`](./service.js) – Lokaler Tizen Node.js Hintergrund-Proxy & Stream-Extractor (VOE / ALTCHA / Google Auth)
-- [`hls.min.js`](./hls.min.js) – Gebündelte HLS.js-Bibliothek für adaptive `.m3u8` Video-Streams
-- [`icon.png`](./icon.png) – App-Icon für das Samsung TV Smart Hub Menü
+| Feature | 🛡️ AdFree Browser Pro | 🌐 Stock Samsung Browser |
+| :--- | :---: | :---: |
+| **Pop-Up & Overlay Ad-Blocking** | ✅ **100% Blocked at DOM & Network Level** | ❌ Frequent pop-ups & redirect ads |
+| **Direct HLS (`.m3u8`) & `.mp4` Extraction** | ✅ **Automatic Native TV Player** | ❌ Fails or stutters inside ad-heavy iframes |
+| **Multi-Hoster Auto-Fallback** | ✅ **Automatic (Language-Aware)** | ❌ Manual reload required |
+| **Cursor Inside Video / Web Containers** | ✅ **Never gets stuck in iframes** | ❌ Cursor freezes inside nested iframes |
+| **Chrome-Style Auto-Hide Fullscreen** | ✅ **100% Screen (0px bars)** | ⚠️ Persistent top/bottom UI bars |
+| **Background RAM Usage When Closed** | ✅ **0 MB (Auto-Suspends on Exit)** | ❌ Stays resident in RAM (~250+ MB) |
 
 ---
 
-## 🚀 Installation auf dem Samsung Smart TV
+## 🎮 TV Remote Control Shortcuts
 
-1. **Entwicklermodus auf dem TV aktivieren:**
-   - Öffne auf dem Samsung TV die App **Apps**.
-   - Tippe über die Fernbedienung **`12345`** ein.
-   - Schalte den **Developer Mode** auf **On**, trage die IP-Adresse deines PCs ein und starte den TV neu.
-2. **Paket packen, signieren & installieren:**
-   - Verbinde dich per Tizen SDB mit dem Fernseher:
-     ```bash
-     sdb connect <TV-IP>:26101
-     ```
-   - Packe und signiere das Projektverzeichnis als `.wgt`-Paket mit deinem Tizen-Zertifikat (z. B. über Tizen Studio CLI `tizen package -t wgt` oder `TizenSdb`) und installiere es:
-     ```bash
-     sdb install AdFreeBrowser.wgt
-     ```
+| Remote Button | Action in Browser Mode | Action in Video Fullscreen |
+| :--- | :--- | :--- |
+| **D-Pad (Up / Down / Left / Right)** | Move virtual mouse cursor (accelerates when held) | Seek `-15s` / `+15s` (Left/Right) or wake HUD (Up/Down) |
+| **OK / Enter Button** | Click element under cursor / Open TV Keyboard on inputs & search icons | Play / Pause video (or click HUD button if hovered) |
+| **🔴 Red Button** | Toggle **Video Fullscreen** (if video active) or **Chrome Browser Fullscreen** | Exit Fullscreen |
+| **🟢 Green Button** | Open a **New Tab** | Open a New Tab |
+| **🟡 Yellow Button** | Open **On-Screen TV Keyboard** (URL / Search) | Open On-Screen TV Keyboard |
+| **🔵 Blue Button** | Open **Favorites & Browsing History** | Open Favorites & History |
+| **CH ⬆️ / CH ⬇️ (Channel Up/Down)** | Smooth page scroll Up / Down (`550px`) | Smooth page scroll |
+| **⏯️ Play/Pause / ⏪ / ⏩** | Control active video stream on page | Play/Pause or Seek `-15s` / `+15s` |
+| **↩️ Back / Return Button** | Exit Fullscreen → Navigate Back in Tab → Exit App | Exit Video Fullscreen |
+
+---
+
+## 🚀 Installation Guide (3 Easy Methods)
+
+### Prerequisites: Enable Developer Mode on Your Samsung TV
+1. On your Samsung TV, open the **Apps** screen from the Smart Hub home menu.
+2. Using your remote, enter the PIN sequence **`1` `2` `3` `4` `5`**.
+3. Toggle **Developer Mode** to **ON** and enter the IP address of your PC.
+4. **Restart your TV** (hold the Power button on the remote for 5 seconds until the Samsung logo appears).
+
+---
+
+### Method 1: 1-Click Install via Jellyfin2Samsung / TizenSDB (Recommended & Easiest)
+1. Download the latest **`AdFreeBrowser_v1.1.5.wgt`** from the [**Releases**](https://github.com/yummi-gb/AdFree-Browser-Pro/releases) page (or from the [`releases/`](releases/) folder in this repository).
+2. Open [**Jellyfin2Samsung**](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer) (or any Tizen WGT Installer tool), select **Custom WGT**, choose `AdFreeBrowser_v1.1.5.wgt`, enter your TV's IP address, and click **Install**.
+   *(The tool will automatically re-sign the `.wgt` package with your TV's certificate and install it in seconds!)*
+
+---
+
+### Method 2: Install via Tizen Studio CLI (`sdb`)
+If you already have Tizen Studio (`sdb` and `tizen` CLI) installed on your computer:
+
+```bash
+# 1. Connect to your Samsung Smart TV
+sdb connect <YOUR_TV_IP>:26101
+
+# 2. (Optional) Re-sign the package with your own Tizen author/distributor certificate profile
+tizen package -t wgt -s <YOUR_CERT_PROFILE> -- AdFreeBrowser.wgt
+
+# 3. Push & install onto the TV
+sdb push AdFreeBrowser.wgt /home/owner/share/tmp/sdk_tools/AdFreeBrowser.wgt
+sdb shell 0 vd_appinstall AdFreeBrws.AdFreeBrowser /home/owner/share/tmp/sdk_tools/AdFreeBrowser.wgt
+sdb shell 0 rm /home/owner/share/tmp/sdk_tools/AdFreeBrowser.wgt
+```
+
+---
+
+### Method 3: Build from Source
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/yummi-gb/AdFree-Browser-Pro.git
+   cd AdFree-Browser-Pro
+   ```
+2. Zip the core files (`config.xml`, `index.html`, `service.js`, `hls.min.js`, `icon.png`) into `AdFreeBrowser.wgt`:
+   ```powershell
+   Compress-Archive -Path config.xml,index.html,service.js,hls.min.js,icon.png -DestinationPath AdFreeBrowser.zip -Force
+   Move-Item AdFreeBrowser.zip AdFreeBrowser.wgt -Force
+   ```
+3. Sign and deploy using `TizenSdb` or `tizen package`.
+
+---
+
+## 🏗️ System Architecture
+
+AdFree Browser Pro uses a **hybrid Tizen Web UI + Background Node.js Service (`AdFreeBrws.ProxyService`)** architecture to bypass cross-origin (CORS) blocks, `X-Frame-Options` restrictions, redirect gates, and `Referer`-locked video CDNs directly on the TV:
+
+```mermaid
+flowchart LR
+    Remote["🎮 Samsung TV Remote\n(D-Pad / Color / Media Keys)"] --> UI["🖥️ AdFree Browser UI (index.html)\nDirect-DOM Renderer + HLS.js Player"]
+    UI <-->|"HTTP 127.0.0.1:8124\n/proxy, /extract-video, /stream-proxy"| NodeSvc["⚙️ Tizen Node.js Service (service.js)\nAdFreeBrws.ProxyService"]
+    NodeSvc <-->|"TLS / Cookie Jar / ALTCHA Gate Solver\nJS Unpacker & Referer Header Injection"| Web["🌐 External Websites & Video CDNs\n(HLS .m3u8 / MP4 Streams)"]
+```
+
+---
+
+## 🔍 Topics & Keywords
+
+`samsung-tv` • `tizen` • `tizen-tv` • `samsung-smart-tv` • `adblock-browser` • `tizen-homebrew` • `smart-tv-browser` • `hls-player` • `voe-extractor` • `stream-extractor` • `tizen-wgt` • `samsung-oled-s90d` • `tizen-studio`
+
+---
+
+## 📜 License
+
+Released under the [MIT License](LICENSE). Contributions, issue reports, and pull requests are welcome! If this project makes your Samsung TV faster and ad-free, please give it a **⭐ Star** on GitHub!
